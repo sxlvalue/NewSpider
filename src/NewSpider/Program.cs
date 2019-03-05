@@ -9,38 +9,22 @@ using NewSpider.Scheduler;
 using Serilog;
 using Serilog.Events;
 
+
 namespace NewSpider
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .Enrich.FromLogContext()
-                .WriteTo.Console().WriteTo.RollingFile("new-spider.log")
-                .CreateLogger();
+            Infrastructure.Log.UseSerilog();
+            var spider = new Spider(Guid.NewGuid().ToString("N"), "test");
+            for (int i = 0; i < 1100; ++i)
+            {
+                spider.AddRequest(new Request {Url = "http://file.xbzq.ltd:5566/contents/?arg=" + i});
+            }
 
-            await new HostBuilder()
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddHostedService<IDownloaderService>();
-                    services.AddHostedService<ISchedulerService>();
-                    services.AddLogging();
-                }).ConfigureAppConfiguration(((context, config) =>
-                {
-                    config.SetBasePath(Directory.GetCurrentDirectory());
-                    config.AddJsonFile("appsettings.json", true);
-                    config.AddEnvironmentVariables();
-                    if (args != null) config.AddCommandLine(args);
-                }))
-                .ConfigureLogging(((context,
-                    builder) =>
-                {
-                    builder.AddSerilog();
-                }))
-                .RunConsoleAsync();
+            spider.RunAsync().ConfigureAwait(false);
+            Console.Read();
         }
     }
 }

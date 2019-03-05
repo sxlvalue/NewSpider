@@ -70,7 +70,16 @@ A distributed spider
                                   |    +-----------+  +----------+  +----------+   |        +---------------+         
                                   +------------------------------------------------+  
 
-
+1. 启动
+2. 暂停 -》 继续
+3. 
 
 
 ``` 
+
+### 任务视图
+
+Project: Create project、Search project、Delete project、Update project、Build docker image (Create)、Remove docker image
+Job: Create job(名称、cron、镜像选择、运行参数、备注)、Search job(名称、CRON、版本、状态、下载器链接、日志链接)、Delete job、Update job、控制(暂停、继续、重新运行、重启)
+
+
