@@ -6,7 +6,7 @@ namespace NewSpider.Scheduler
 {
     public interface IScheduler
     {
-        Task<IEnumerable<IRequest>> PollAsync(string ownerId, uint count);
+        Task<IEnumerable<IRequest>> PollAsync(string ownerId, int count);
 
         Task PushAsync(string ownerId, IEnumerable<IRequest> requests);
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using NewSpider.Downloader.Internal;
 using Newtonsoft.Json;
 
 namespace NewSpider.Downloader

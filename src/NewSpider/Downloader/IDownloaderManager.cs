@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace NewSpider.Downloader
 {
-    public interface IDownloaderService : IHostedService
+    public interface IDownloaderManager : IHostedService
     {
         Task RegisterAsync(string ownerId, int nodeCount, int threadNum, string domain = null, string cookie = null,
             bool useProxy = false, bool inherit = false);

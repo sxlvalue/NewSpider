@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using NewSpider.Infrastructure;
 
-namespace NewSpider.Downloader
+namespace NewSpider.Downloader.Internal
 {
     public class LocalDownloaderAgentStore : IDownloaderAgentStore
     {

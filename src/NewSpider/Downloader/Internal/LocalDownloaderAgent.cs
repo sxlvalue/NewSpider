@@ -5,9 +5,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using NewSpider.Infrastructure;
-using Newtonsoft.Json;
 
-namespace NewSpider.Downloader
+namespace NewSpider.Downloader.Internal
 {
     public class LocalDownloaderAgent : IDownloaderAgent
     {

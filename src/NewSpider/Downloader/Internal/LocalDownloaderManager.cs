@@ -2,21 +2,22 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NewSpider.Downloader
+namespace NewSpider.Downloader.Internal
 {
-    public class LocalDownloaderService : IDownloaderService
-    {      
+    public class LocalDownloaderManager : IDownloaderManager
+    {
         private readonly IMessageQueue _mq;
         private readonly IDownloaderAgentStore _downloaderAgentStore;
-        
 
-        public LocalDownloaderService(IMessageQueue mq,IDownloaderAgentStore downloaderAgentStore)
+
+        public LocalDownloaderManager(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore)
         {
             _mq = mq;
             _downloaderAgentStore = downloaderAgentStore;
         }
-        
-        public Task RegisterAsync(string ownerId, int nodeCount, int threadNum, string domain = null, string cookie = null,
+
+        public Task RegisterAsync(string ownerId, int nodeCount, int threadNum, string domain = null,
+            string cookie = null,
             bool useProxy = false, bool inherit = false)
         {
             return Task.CompletedTask;
@@ -25,10 +26,10 @@ namespace NewSpider.Downloader
         public Task PublishAsync(string ownerId, IEnumerable<IRequest> requests)
         {
             // 1. 取所有可用 agent
-            
+
             // 2. 按照策略发送给指定 aget 消息
             _mq.PublishAsync("agentId", "");
-            throw new System.NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task ShutDownDownloader(string downloaderId)

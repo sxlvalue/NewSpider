@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NewSpider.Downloader;
+using NewSpider.Downloader.Internal;
 using NewSpider.Infrastructure;
 using NewSpider.Pipeline;
 using NewSpider.Processor;
@@ -22,7 +23,7 @@ namespace NewSpider
         private readonly IList<IPipeline> _pipelines = new List<IPipeline>();
         private readonly IList<IDataFlow> _dataFlows = new List<IDataFlow>();
         private readonly IList<IRequest> _requests = new List<IRequest>();
-        private readonly IDownloaderService _downloaderService;
+        private readonly IDownloaderManager _downloaderService;
         private readonly ILogger _logger;
         private readonly IScheduler _scheduler;
         private readonly IMessageQueue _mq;
@@ -52,13 +53,13 @@ namespace NewSpider
         }
 
         public Spider(string id, string name, IScheduler scheduler = null, IMessageQueue mq = null,
-            IDownloaderService downloaderService = null)
+            IDownloaderManager downloaderService = null)
         {
             Id = id;
             Name = name;
             _scheduler = scheduler ?? new QueueScheduler();
             _mq = mq ?? new LocalMessageQueue();
-            _downloaderService = downloaderService ?? new LocalDownloaderService(_mq, new LocalDownloaderAgentStore());
+            _downloaderService = downloaderService ?? new LocalDownloaderManager(_mq, new LocalDownloaderAgentStore());
             _logger = Log.CreateLogger(typeof(Spider).Name);
         }
 
@@ -129,7 +130,7 @@ namespace NewSpider
                         {
                             try
                             {
-                                var requests = (await _scheduler.PollAsync(Id, Speed)).ToArray();
+                                var requests = (await _scheduler.PollAsync(Id, (int)Speed)).ToArray();
                                 foreach (var request in requests)
                                 {
                                     BeforeDownload?.Invoke(request);
