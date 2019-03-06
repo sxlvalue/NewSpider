@@ -1,18 +1,16 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using NewSpider.Downloader.Entity;
 
 namespace NewSpider.Downloader
 {
-    public interface IDownloaderManager : IHostedService
+    public interface IDownloaderManager
     {
-        Task RegisterAsync(string ownerId, int nodeCount, int threadNum, string domain = null, string cookie = null,
-            bool useProxy = false, bool inherit = false);
+        Task RegisterAsync(DownloaderOptions options);
 
-        Task PublishAsync(string ownerId, IEnumerable<IRequest> requests);
-
-        Task ShutDownDownloader(string downloaderId);
-
-        Task ExcludeDownloader(string ownerId, string downloaderId);
+        Task PublishAsync(IEnumerable<IRequest> requests);
+        
+        IDownloaderAgentStore Store { get; }
     }
 }

@@ -16,8 +16,10 @@ namespace NewSpider
     {
         static void Main(string[] args)
         {
+            
             Infrastructure.Log.UseSerilog();
             var spider = new Spider(Guid.NewGuid().ToString("N"), "test");
+            spider.Speed = 5;
             for (int i = 0; i < 1100; ++i)
             {
                 spider.AddRequest(new Request {Url = "http://file.xbzq.ltd:5566/contents/?arg=" + i});

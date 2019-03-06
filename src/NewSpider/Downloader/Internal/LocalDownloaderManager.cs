@@ -1,55 +1,67 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using NewSpider.Downloader.Entity;
+using NewSpider.Infrastructure;
+using Newtonsoft.Json;
 
 namespace NewSpider.Downloader.Internal
 {
-    public class LocalDownloaderManager : IDownloaderManager
+    internal class LocalDownloaderManager : IDownloaderManager
     {
         private readonly IMessageQueue _mq;
         private readonly IDownloaderAgentStore _downloaderAgentStore;
+        private readonly ILogger _logger;
 
+        public IDownloaderAgentStore Store => _downloaderAgentStore;
 
         public LocalDownloaderManager(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore)
         {
             _mq = mq;
             _downloaderAgentStore = downloaderAgentStore;
+            _logger = Log.CreateLogger(typeof(LocalDownloaderManager).Name);
         }
 
-        public Task RegisterAsync(string ownerId, int nodeCount, int threadNum, string domain = null,
-            string cookie = null,
-            bool useProxy = false, bool inherit = false)
+        public async Task RegisterAsync(DownloaderOptions options)
         {
-            return Task.CompletedTask;
+            var agents = (await _downloaderAgentStore.GetAvailableAsync()).ToArray();
+            if (agents.Length <= 0)
+            {
+                _logger.LogError("No available downloader agent");
+            }
+
+            var json = JsonConvert.SerializeObject(options);
+            foreach (var agent in agents)
+            {
+                await _mq.PublishAsync(agent.Id.ToString(), $"Init|{json}");
+            }
         }
 
-        public Task PublishAsync(string ownerId, IEnumerable<IRequest> requests)
+        public async Task PublishAsync(IEnumerable<IRequest> requests)
         {
             // 1. 取所有可用 agent
+            var agents = (await _downloaderAgentStore.GetAvailableAsync()).ToArray();
+            if (agents.Length <= 0)
+            {
+                _logger.LogError("No available downloader agent");
+            }
 
-            // 2. 按照策略发送给指定 aget 消息
-            _mq.PublishAsync("agentId", "");
-            return Task.CompletedTask;
-        }
+            var agentIndex = 0;
+            foreach (var request in requests)
+            {
+                var agent = agents[agentIndex];
+                agentIndex++;
+                if (agentIndex >= agents.Length)
+                {
+                    agentIndex = 0;
+                }
 
-        public Task ShutDownDownloader(string downloaderId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task ExcludeDownloader(string ownerId, string downloaderId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            throw new System.NotImplementedException();
+                var json = JsonConvert.SerializeObject(new[] {request});
+                await _mq.PublishAsync(agent.Id.ToString(), $"Download|{json}");
+            }
         }
     }
 }

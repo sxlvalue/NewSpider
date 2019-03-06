@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
 using NewSpider.Pipeline;
 using NewSpider.Processor;
 
@@ -9,13 +10,14 @@ namespace NewSpider
         [MethodImpl(MethodImplOptions.Synchronized)]
         public Spider AddRequest(IRequest request)
         {
+            request.OwnerId = Id;
             _requests.Add(request);
             if (_requests.Count == 1000)
             {
                 _scheduler.PushAsync(Id, _requests);
+                _logger.LogInformation("Push requests to scheduler");
+                _requests.Clear();
             }
-
-            _requests.Clear();
             return this;
         }
         

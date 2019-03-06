@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NewSpider.Downloader;
+using NewSpider.Downloader.Entity;
 using NewSpider.Downloader.Internal;
 using NewSpider.Infrastructure;
 using NewSpider.Pipeline;
@@ -23,10 +24,10 @@ namespace NewSpider
         private readonly IList<IPipeline> _pipelines = new List<IPipeline>();
         private readonly IList<IDataFlow> _dataFlows = new List<IDataFlow>();
         private readonly IList<IRequest> _requests = new List<IRequest>();
-        private readonly IDownloaderManager _downloaderService;
+        private readonly IDownloaderManager _dm;
+        private readonly IMessageQueue _mq;
         private readonly ILogger _logger;
         private readonly IScheduler _scheduler;
-        private readonly IMessageQueue _mq;
         private DateTime _lastRequestTime;
         private event RequestHandler BeforeDownload;
         private Semaphore _semaphore;
@@ -37,6 +38,8 @@ namespace NewSpider
         public uint DownloaderCount { get; set; } = 1;
         public string Id { get; }
         public string Name { get; }
+
+        public bool IsDistributed { get; set; }
 
         public uint EmptySleepTime
         {
@@ -53,13 +56,14 @@ namespace NewSpider
         }
 
         public Spider(string id, string name, IScheduler scheduler = null, IMessageQueue mq = null,
-            IDownloaderManager downloaderService = null)
+            IDownloaderManager dm = null)
         {
             Id = id;
             Name = name;
             _scheduler = scheduler ?? new QueueScheduler();
+            IsDistributed = mq != null;
             _mq = mq ?? new LocalMessageQueue();
-            _downloaderService = downloaderService ?? new LocalDownloaderManager(_mq, new LocalDownloaderAgentStore());
+            _dm = dm ?? new LocalDownloaderManager(_mq, new LocalDownloaderAgentStore());
             _logger = Log.CreateLogger(typeof(Spider).Name);
         }
 
@@ -70,7 +74,13 @@ namespace NewSpider
             {
                 _status = Status.Running;
 
-                await RegisterDownloaderService();
+                if (!IsDistributed)
+                {
+                    var agent = new LocalDownloaderAgent(_mq, _dm.Store);
+                    agent.StartAsync(new CancellationToken()).ConfigureAwait(false);
+                }
+
+                await RegisterDownloaderManager();
                 _logger.LogInformation("Register downloader service: OK");
 
                 RunSpeedControllerAsync().ConfigureAwait(false);
@@ -79,13 +89,18 @@ namespace NewSpider
                 dataFlows.AddRange(_processors);
                 dataFlows.AddRange(_dataFlows);
                 dataFlows.AddRange(_pipelines);
-                _mq.Subscribe("Response-Handler-" + Id, (message) =>
+                _mq.Subscribe($"{NewSpiderCons.ResponseHandlerTopic}{Id}", (message) =>
                 {
                     _lastRequestTime = DateTime.Now;
-                    var response = JsonConvert.DeserializeObject<ResponseEvent>(message);
-                    var context = new FlowContext {Request = response.Request};
+                    var responses = JsonConvert.DeserializeObject<List<Response>>(message);
+                    Parallel.ForEach(responses, (response) =>
+                    {
+                        var context = new FlowContext {Request = response.Request};
 
-                    Parallel.ForEach(dataFlows, async df => { await df.Handle(context); });
+                        Parallel.ForEach(dataFlows, async df => { await df.Handle(context); });
+
+                        _logger.LogInformation($"Handle {response.Request.Url} success");
+                    });
                 });
                 _lastRequestTime = DateTime.Now;
                 while (_semaphore != Semaphore.Exit)
@@ -130,13 +145,13 @@ namespace NewSpider
                         {
                             try
                             {
-                                var requests = (await _scheduler.PollAsync(Id, (int)Speed)).ToArray();
+                                var requests = (await _scheduler.PollAsync(Id, (int) Speed)).ToArray();
                                 foreach (var request in requests)
                                 {
                                     BeforeDownload?.Invoke(request);
                                 }
 
-                                await _downloaderService.PublishAsync(Id, requests);
+                                await _dm.PublishAsync(requests);
                             }
                             catch (Exception e)
                             {
@@ -159,9 +174,13 @@ namespace NewSpider
             });
         }
 
-        private async Task RegisterDownloaderService()
+        private async Task RegisterDownloaderManager()
         {
-            await _downloaderService.RegisterAsync(Id, 1, 1);
+            await _dm.RegisterAsync(new DownloaderOptions
+            {
+                OwnerId = Id,
+                DownloaderCount = DownloaderCount,
+            });
         }
 
         public void Pause()

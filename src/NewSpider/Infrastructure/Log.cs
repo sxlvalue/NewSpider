@@ -14,6 +14,11 @@ namespace NewSpider.Infrastructure
             return Factory.CreateLogger(name);
         }
 
+        public static ILogger CreateLogger<T>()
+        {
+            return Factory.CreateLogger(typeof(T).FullName);
+        }
+
         public static void UseConsole()
         {
             Factory.AddConsole();
