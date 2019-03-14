@@ -11,6 +11,7 @@ using NewSpider.Downloader;
 using NewSpider.Downloader.Entity;
 using NewSpider.Downloader.Internal;
 using NewSpider.Infrastructure;
+using NewSpider.MessageQueue;
 using NewSpider.Pipeline;
 using NewSpider.Processor;
 using NewSpider.Scheduler;
@@ -24,7 +25,7 @@ namespace NewSpider
         private readonly IList<IPipeline> _pipelines = new List<IPipeline>();
         private readonly IList<IDataFlow> _dataFlows = new List<IDataFlow>();
         private readonly IList<IRequest> _requests = new List<IRequest>();
-        private readonly IDownloaderManager _dm;
+
         private readonly IMessageQueue _mq;
         private readonly ILogger _logger;
         private readonly IScheduler _scheduler;
@@ -63,7 +64,7 @@ namespace NewSpider
             _scheduler = scheduler ?? new QueueScheduler();
             IsDistributed = mq != null;
             _mq = mq ?? new LocalMessageQueue();
-            _dm = dm ?? new LocalDownloaderManager(_mq, new LocalDownloaderAgentStore());
+
             _logger = Log.CreateLogger(typeof(Spider).Name);
         }
 
@@ -76,11 +77,11 @@ namespace NewSpider
 
                 if (!IsDistributed)
                 {
-                    var agent = new LocalDownloaderAgent(_mq, _dm.Store);
+                    var agent = new LocalDownloaderAgent(_mq);
                     agent.StartAsync(new CancellationToken()).ConfigureAwait(false);
                 }
 
-                await RegisterDownloaderManager();
+                await AllotDownloaderAsync();
                 _logger.LogInformation("Register downloader service: OK");
 
                 RunSpeedControllerAsync().ConfigureAwait(false);
@@ -89,7 +90,7 @@ namespace NewSpider
                 dataFlows.AddRange(_processors);
                 dataFlows.AddRange(_dataFlows);
                 dataFlows.AddRange(_pipelines);
-                _mq.Subscribe($"{NewSpiderCons.ResponseHandlerTopic}{Id}", (message) =>
+                _mq.Subscribe($"{NewSpiderConsts.ResponseHandlerTopic}{Id}", (message) =>
                 {
                     _lastRequestTime = DateTime.Now;
                     var responses = JsonConvert.DeserializeObject<List<Response>>(message);
@@ -151,7 +152,8 @@ namespace NewSpider
                                     BeforeDownload?.Invoke(request);
                                 }
 
-                                await _dm.PublishAsync(requests);
+                                var json = JsonConvert.SerializeObject(requests);
+                                await _mq.PublishAsync(NewSpiderConsts.DownloaderCenterTopic, $"Download|{json}");
                             }
                             catch (Exception e)
                             {
@@ -174,13 +176,16 @@ namespace NewSpider
             });
         }
 
-        private async Task RegisterDownloaderManager()
+        private async Task AllotDownloaderAsync()
         {
-            await _dm.RegisterAsync(new DownloaderOptions
+            var json = JsonConvert.SerializeObject(new AllotDownloaderMessage
             {
                 OwnerId = Id,
-                DownloaderCount = DownloaderCount,
+                Type = DownloaderType.Empty,
+                Speed = Speed,
+                UseProxy = false
             });
+            await _mq.PublishAsync(NewSpiderConsts.DownloaderCenterTopic, $"Allocate|{json}");
         }
 
         public void Pause()

@@ -6,10 +6,12 @@ namespace NewSpider.Downloader
 {
     public interface IDownloaderAgentStore
     {
-        Task<IEnumerable<DownloaderAgent>> GetAvailableAsync();
+        Task<IEnumerable<DownloaderAgentHeartbeat>> GetAvailableAsync();
 
-        Task RegisterAsync(DownloaderAgent agent);
+        Task RegisterAsync(DownloaderAgentHeartbeat agent);
 
-        Task HeartbeatAsync(DownloaderAgent agent);
+        Task HeartbeatAsync(DownloaderAgentHeartbeat agent);
+        
+        Task AllocateAsync(string ownerId, IEnumerable<string> agnetIds);
     }
 }

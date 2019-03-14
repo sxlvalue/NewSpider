@@ -7,7 +7,7 @@ namespace NewSpider.Downloader
 {
     public interface IDownloaderManager
     {
-        Task RegisterAsync(DownloaderOptions options);
+        Task RegisterAsync(AllotDownloaderMessage options);
 
         Task PublishAsync(IEnumerable<IRequest> requests);
         
