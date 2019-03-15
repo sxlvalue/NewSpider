@@ -6,6 +6,7 @@ using NewSpider.Downloader;
 using NewSpider.Downloader.Internal;
 using NewSpider.MessageQueue;
 using NewSpider.Scheduler;
+using NewSpider.Statistics;
 using Serilog;
 using Serilog.Events;
 
@@ -25,7 +26,7 @@ namespace NewSpider
             _services.AddSingleton<IDownloadCenter, LocalDownloadCenter>();
             _services.AddSingleton<IDownloaderAgentStore, LocalDownloaderAgentStore>();
             _services.AddSingleton<IDownloadService, LocalDownloadCenter>();
-            _services.AddSingleton<IStatisticsService, LocalStatisticsService>();
+            _services.AddSingleton<IStatisticsStore, MemoryStatisticsStore>();
             _services.AddTransient<ISpider, Spider>();
         }
 

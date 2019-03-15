@@ -35,7 +35,7 @@ namespace NewSpider
             spider.Id = Guid.NewGuid().ToString("N");
             spider.Name = "test";
             spider.AddRequests();
-            spider.Speed = 5;
+            spider.Speed = 0.5;
 
             for (int i = 0; i < 21; ++i)
             {
@@ -43,8 +43,6 @@ namespace NewSpider
             }
  
             spider.RunAsync().ConfigureAwait(false);
-
- 
             Console.Read();
         }
     }

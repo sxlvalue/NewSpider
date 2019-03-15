@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-using NewSpider.Downloader.Entity;
-using NewSpider.Infrastructure;
 
-namespace NewSpider
+namespace NewSpider.Statistics
 {
-    public class LocalStatisticsService : IStatisticsService
+    public class MemoryStatisticsStore : IStatisticsStore
     {
         private readonly ConcurrentDictionary<string, SpiderStatistics> _spiderStatisticsDict =
             new ConcurrentDictionary<string, SpiderStatistics>();
 
         private readonly ConcurrentDictionary<string, DownloadStatistics> _downloadStatisticsDict =
             new ConcurrentDictionary<string, DownloadStatistics>();
-        
-        public Task TotalAsync(string ownerId, uint count)
+
+        public Task IncrementTotalAsync(string ownerId, uint count)
         {
             if (!_spiderStatisticsDict.ContainsKey(ownerId))
             {
@@ -27,7 +24,7 @@ namespace NewSpider
             return Task.CompletedTask;
         }
 
-        public Task SuccessAsync(string ownerId)
+        public Task IncrementSuccessAsync(string ownerId)
         {
             if (!_spiderStatisticsDict.ContainsKey(ownerId))
             {
@@ -38,7 +35,7 @@ namespace NewSpider
             return Task.CompletedTask;
         }
 
-        public Task FailedAsync(string ownerId)
+        public Task IncrementFailedAsync(string ownerId)
         {
             if (!_spiderStatisticsDict.ContainsKey(ownerId))
             {
@@ -71,7 +68,7 @@ namespace NewSpider
             return Task.CompletedTask;
         }
 
-        public Task DownloadSuccessAsync(string agentId, int count, long elapsedMilliseconds)
+        public Task IncrementDownloadSuccessAsync(string agentId, int count, long elapsedMilliseconds)
         {
             if (!_downloadStatisticsDict.ContainsKey(agentId))
             {
@@ -83,7 +80,7 @@ namespace NewSpider
             return Task.CompletedTask;
         }
 
-        public Task DownloadFailedAsync(string agentId, int count)
+        public Task IncrementDownloadFailedAsync(string agentId, int count)
         {
             if (!_downloadStatisticsDict.ContainsKey(agentId))
             {
@@ -101,7 +98,13 @@ namespace NewSpider
 
         public Task<DownloadStatistics> GetDownloadStatisticsAsync(string agentId)
         {
-            throw new System.NotImplementedException();
+            var statistics = new DownloadStatistics();
+            if (_downloadStatisticsDict.ContainsKey(agentId))
+            {
+                statistics = _downloadStatisticsDict[agentId];
+            }
+
+            return Task.FromResult(statistics);
         }
 
         public Task<SpiderStatistics> GetSpiderStatisticsAsync(string ownerId)
@@ -119,7 +122,5 @@ namespace NewSpider
         {
             throw new System.NotImplementedException();
         }
-
-
     }
 }

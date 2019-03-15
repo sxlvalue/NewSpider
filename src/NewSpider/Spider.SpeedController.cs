@@ -12,23 +12,23 @@ namespace NewSpider
     {
         private Task StartSpeedControllerAsync()
         {
-            _semaphore = Semaphore.Run;
-
             return Task.Factory.StartNew(async () =>
             {
                 _logger.LogInformation($"任务 {Id} 速度控制器启动");
                 bool @break = false;
+
+
                 while (!@break)
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(_speedControllerInterval);
 
-                    switch (_semaphore)
+                    switch (_status)
                     {
-                        case Semaphore.Run:
+                        case   Status.Running :
                         {
                             try
                             {
-                                var requests = (await _scheduler.PollAsync(Id, (int) Speed)).ToArray();
+                                var requests = (await _scheduler.PollAsync(Id, _pullRequestBatch)).ToArray();
                                 foreach (var request in requests)
                                 {
                                     BeforeDownload?.Invoke(request);
@@ -41,22 +41,25 @@ namespace NewSpider
                             }
                             catch (Exception e)
                             {
-                                _logger.LogError(e.ToString());
+                                _logger.LogError($"速度控制器运转失败: {e}");
                             }
 
                             break;
                         }
-                        case Semaphore.Pause:
+                        case Status.Paused:
                         {
+                            _logger.LogInformation($"任务 {Id} 速度控制器暂停");
                             break;
                         }
-                        case Semaphore.Exit:
+                        case Status.Exited:
                         {
                             @break = true;
                             break;
                         }
                     }
                 }
+
+                _logger.LogInformation($"任务 {Id} 速度控制器退出");
             });
         }
     }

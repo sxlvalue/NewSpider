@@ -1,9 +1,7 @@
 using System;
-using System.Threading;
 using NewSpider.Infrastructure;
-using Serilog;
 
-namespace NewSpider
+namespace NewSpider.Statistics
 {
     public class SpiderStatistics
     {

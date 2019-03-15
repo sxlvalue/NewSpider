@@ -32,17 +32,23 @@ namespace NewSpider
             {
                 request.OwnerId = Id;
                 _requests.Add(request);
-                if (_requests.Count == RequestBatchCount)
+                if (_requests.Count % RequestBatchCount == 0)
                 {
-                    var count = _scheduler.PushAsync(Id, _requests).GetAwaiter().GetResult();
-
-                    _statisticsService.TotalAsync(Id, count).ConfigureAwait(false);
-                    _logger.LogInformation($"任务 {Id} 请求推送到调度器: {RequestBatchCount}");
-                    _requests.Clear();
+                    PushRequests();
                 }
             }
 
             return this;
+        }
+
+        private void PushRequests()
+        {
+            if (_requests.Count <= 0) return;
+
+            var count = _scheduler.PushAsync(Id, _requests).GetAwaiter().GetResult();
+            _statisticsService.IncrementTotalAsync(Id, count).ConfigureAwait(false);
+            _logger.LogInformation($"任务 {Id} 请求推送到调度器: {_requests.Count}");
+            _requests.Clear();
         }
     }
 }

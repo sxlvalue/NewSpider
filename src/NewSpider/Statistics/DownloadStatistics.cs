@@ -1,6 +1,6 @@
 using NewSpider.Infrastructure;
 
-namespace NewSpider.Downloader.Entity
+namespace NewSpider.Statistics
 {
     public class DownloadStatistics
     {

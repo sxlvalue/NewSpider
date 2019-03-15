@@ -21,6 +21,6 @@ namespace NewSpider
 
         ISpider AddRequests(params Request[] requests);
 
-        uint Speed { get; set; }
+        double Speed { get; set; }
     }
 }

@@ -11,23 +11,18 @@ namespace NewSpider
     public enum Status
     {
         /// <summary>
-        /// 初始化
-        /// </summary>
-        Init = 1,
-
-        /// <summary>
         /// 正在运行
         /// </summary>
-        Running = 2,
+        Running = 1,
 
         /// <summary>
         /// 暂停
         /// </summary>
-        Paused = 4,
+        Paused = 2,
 
         /// <summary>
         /// 完成
         /// </summary>
-        Exited = 8
+        Exited = 4
     }
 }

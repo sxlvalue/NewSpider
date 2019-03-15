@@ -8,6 +8,6 @@ namespace NewSpider.Downloader.Entity
         public string Cookie { get; set; }
         public string Path { get; set; }
         public bool UseProxy { get; set; }
-        public uint Speed { get; set; }
+        public double Speed { get; set; }
     }
 }

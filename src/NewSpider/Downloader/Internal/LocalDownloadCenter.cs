@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using NewSpider.Downloader.Entity;
 using NewSpider.Infrastructure;
 using NewSpider.MessageQueue;
+using NewSpider.Statistics;
 using Newtonsoft.Json;
 
 namespace NewSpider.Downloader.Internal
@@ -14,7 +15,7 @@ namespace NewSpider.Downloader.Internal
     public class LocalDownloadCenter : AbstractDownloadCenter
     {
         public LocalDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore,
-            IStatisticsService statisticsService,
+            IStatisticsStore statisticsService,
             ILoggerFactory loggerFactory) : base(mq, downloaderAgentStore, statisticsService, loggerFactory)
         {
         }
@@ -57,8 +58,7 @@ namespace NewSpider.Downloader.Internal
 
         public override async Task EnqueueRequests(string ownerId, IEnumerable<Request> requests)
         {
-            // TODO: 根据策略分配下载器: 1. Request 从哪个下载器返回的需要返回到对应的下载器  2. 随机一个下载器
-            // 1. 取所有可用 agent
+            // 本机下载中心只会有一个下载代理
             var agents = await DownloaderAgentStore.GetAllListAsync(ownerId);
             if (agents.Count <= 0)
             {

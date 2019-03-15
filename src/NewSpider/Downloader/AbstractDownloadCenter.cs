@@ -7,6 +7,7 @@ using NewSpider.Downloader.Entity;
 using NewSpider.Downloader.Internal;
 using NewSpider.Infrastructure;
 using NewSpider.MessageQueue;
+using NewSpider.Statistics;
 using Newtonsoft.Json;
 
 namespace NewSpider.Downloader
@@ -18,9 +19,9 @@ namespace NewSpider.Downloader
         protected readonly IMessageQueue Mq;
         protected readonly ILogger Logger;
         protected readonly IDownloaderAgentStore DownloaderAgentStore;
-        protected readonly IStatisticsService StatisticsService;
+        protected readonly IStatisticsStore StatisticsService;
         
-        public AbstractDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore, IStatisticsService statisticsService,
+        public AbstractDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore, IStatisticsStore statisticsService,
             ILoggerFactory loggerFactory)
         {
             Mq = mq;
@@ -31,6 +32,12 @@ namespace NewSpider.Downloader
 
         public abstract Task<bool> AllocateAsync(AllotDownloaderMessage allotDownloaderMessage);
 
+        /// <summary>
+        /// TODO: 根据策略分配下载器: 1. Request 从哪个下载器返回的需要返回到对应的下载器  2. 随机一个下载器
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <param name="requests"></param>
+        /// <returns></returns>
         public abstract Task EnqueueRequests(string ownerId, IEnumerable<Request> requests);
         
         public Task StartAsync(CancellationToken cancellationToken)

@@ -9,20 +9,19 @@ namespace NewSpider.MessageQueue
 {
     public class LocalMessageQueue : IMessageQueue
     {
-        private readonly Dictionary<string, List<Action<string>>> _consumers =
-            new Dictionary<string, List<Action<string>>>();
+        private readonly Dictionary<string, Action<string>> _consumers =
+            new Dictionary<string, Action<string>>();
+
+        // private readonly ConcurrentDictionary<string,List<string>> _messageQueue = new ConcurrentDictionary<string, List<string>>();
 
         public Task PublishAsync(string topic, params string[] messages)
         {
             if (_consumers.ContainsKey(topic))
             {
-                var consumers = _consumers[topic];
-                foreach (var consumer in consumers)
+                var consumer = _consumers[topic];
+                foreach (var message in messages)
                 {
-                    foreach (var message in messages)
-                    {
-                        Task.Factory.StartNew(() => { consumer.Invoke(message); }).ConfigureAwait(false);
-                    }                    
+                    Task.Factory.StartNew(() => { consumer.Invoke(message); }).ConfigureAwait(false);
                 }
             }
 
@@ -34,12 +33,12 @@ namespace NewSpider.MessageQueue
         {
             if (!_consumers.ContainsKey(topic))
             {
-                _consumers.Add(topic, new List<Action<string>>());
+                _consumers.Add(topic, action);
             }
 
-            _consumers[topic].Add(action);
+            _consumers[topic]=action;            
         }
-        
+
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void Unsubscribe(string topic)
         {

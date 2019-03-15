@@ -198,6 +198,10 @@ namespace NewSpider.Downloader
                                 var response = await DownloadAsync(request);
                                 if (response != null)
                                 {
+                                    if (!response.Success)
+                                    {
+                                    }
+
                                     await _mq.PublishAsync($"{NewSpiderConsts.ResponseHandlerTopic}{grouping.Key}",
                                         JsonConvert.SerializeObject(new[] {response}));
                                 }
@@ -251,7 +255,7 @@ namespace NewSpider.Downloader
                         _cache.TryRemove(expiredDownloaderEntry, out _);
                     }
 
-                    Logger.LogDebug("释放过期下载器");
+                    Logger.LogDebug($"释放过期下载器: {expiredDownloaderEntries.Count}");
                 }
             });
         }
