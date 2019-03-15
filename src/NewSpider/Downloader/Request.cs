@@ -1,8 +1,8 @@
 using System.Net.Http;
 
-namespace NewSpider
+namespace NewSpider.Downloader
 {
-    public class Request : IRequest
+    public class Request 
     {
         public string Hash { get; set; }
         public string OwnerId { get; set; }
@@ -10,5 +10,7 @@ namespace NewSpider
         public string Url { get; set; }
         public string Body { get; set; }
         public HttpMethod Method { get; set; }
+        
+       public int RetriedTimes { get; set; }
     }
 }

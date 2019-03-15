@@ -28,22 +28,23 @@ namespace NewSpider
 
         static void Main(string[] args)
         {
-//            Infrastructure.Log.UseSerilog();
-//            var spider = new Spider(Guid.NewGuid().ToString("N"), "test");
-//            spider.Speed = 5;
-//            for (int i = 0; i < 1100; ++i)
-//            {
-//                spider.AddRequest(new Request {Url = "http://file.xbzq.ltd:5566/contents/?arg=" + i});
-//            }
-//
-//            spider.RunAsync().ConfigureAwait(false);
+            var builder = new LocalSpiderBuilder();
+            builder.UseSerilog();
+            builder.UseQueueScheduler();
+            var spider = builder.Build();
+            spider.Id = Guid.NewGuid().ToString("N");
+            spider.Name = "test";
+            spider.AddRequests();
+            spider.Speed = 5;
 
-            var list = new List<MyClass>
+            for (int i = 0; i < 21; ++i)
             {
-                new MyClass {Id = 1, V = "a"}, new MyClass {Id = 1, V = "b"}, new MyClass {Id = 1, V = "c"},
-                new MyClass {Id = 2, V = "d"}
-            };
-            var a = list.GroupBy(x => x.Id).ToDictionary(x=>x.Key,y=>y.ToList());
+                spider.AddRequests(new Request {Url = "http://file.xbzq.ltd:5566/contents/?arg=" + i});
+            }
+ 
+            spider.RunAsync().ConfigureAwait(false);
+
+ 
             Console.Read();
         }
     }

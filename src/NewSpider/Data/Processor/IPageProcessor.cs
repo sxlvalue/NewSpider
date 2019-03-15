@@ -1,6 +1,4 @@
-using System.Threading.Tasks;
-
-namespace NewSpider.Processor
+namespace NewSpider.Data.Processor
 {
     public interface IPageProcessor : IDataFlow
     {

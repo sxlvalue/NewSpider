@@ -1,44 +1,33 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NewSpider.Downloader;
 
 namespace NewSpider.Scheduler
 {
     public class QueueScheduler : IScheduler
     {
-        private readonly List<IRequest> _requests = new List<IRequest>();
+        private readonly List<Request> _requests = new List<Request>();
 
-        public Task<IEnumerable<IRequest>> PollAsync(string ownerId, int count)
+        public Task<IEnumerable<Request>> PollAsync(string ownerId, int count)
         {
             lock (this)
             {
-                return Task.FromResult(_requests.Take(count));
+                var results = _requests.Take(count).ToList();
+                _requests.RemoveRange(0, results.Count);
+                return Task.FromResult((IEnumerable<Request>) results);
             }
         }
 
-        public Task PushAsync(string ownerId, IEnumerable<IRequest> requests)
+        public Task<uint> PushAsync(string ownerId, IEnumerable<Request> requests)
         {
+            var list = requests.ToList();
             lock (this)
             {
-                _requests.AddRange(requests);
+                _requests.AddRange(list);
             }
 
-            return Task.CompletedTask;
-        }
-
-        public Task<IEnumerable<Statistics>> GetStatistics(IEnumerable<string> ownerId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task IncSuccess(string ownerId)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public Task IncError(string ownerId)
-        {
-            throw new System.NotImplementedException();
+            return Task.FromResult((uint)list.Count);
         }
     }
 }

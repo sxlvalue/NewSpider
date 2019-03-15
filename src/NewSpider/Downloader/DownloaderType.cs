@@ -5,6 +5,7 @@ namespace NewSpider.Downloader
         Empty,
         HttpClient,
         WebDriver,
-        ChromeExtension
+        ChromeExtension,
+        Sample
     }
 }

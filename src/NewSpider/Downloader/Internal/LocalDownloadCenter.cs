@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,107 +11,62 @@ using Newtonsoft.Json;
 
 namespace NewSpider.Downloader.Internal
 {
-    public class LocalDownloadCenter : IDownloadCenter
+    public class LocalDownloadCenter : AbstractDownloadCenter
     {
-        private bool _isRunning;
-
-        private readonly IMessageQueue _mq;
-        private readonly ILogger _logger;
-        private readonly IDownloaderAgentStore _downloaderAgentStore;
-
         public LocalDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore,
-            ILogger<LocalDownloadCenter> logger)
+            IStatisticsService statisticsService,
+            ILoggerFactory loggerFactory) : base(mq, downloaderAgentStore, statisticsService, loggerFactory)
         {
-            _mq = mq;
-            _downloaderAgentStore = downloaderAgentStore;
-            _logger = logger;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public override async Task<bool> AllocateAsync(AllotDownloaderMessage allotDownloaderMessage)
         {
-            if (_isRunning)
+            List<DownloaderAgent> agents = null;
+            for (int i = 0; i < 50; ++i)
             {
-                throw new NewSpiderException("下载中心正在运行中");
+                agents = await DownloaderAgentStore.GetAllListAsync();
+                if (agents.Count <= 0)
+                {
+                    Thread.Sleep(100);
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            _mq.Subscribe(NewSpiderConsts.DownloaderCenterTopic, async (message) =>
+            if (agents == null)
             {
-                var commandMessage = message.ToCommandMessage();
-                if (commandMessage == null)
-                {
-                    _logger.LogWarning($"接收到非法消息: {message}");
-                    return;
-                }
+                Logger.LogError("未找到活跃的下载器代理");
+                return false;
+            }
 
+            // 保存节点选取信息
+            await DownloaderAgentStore.AllocateAsync(allotDownloaderMessage.OwnerId, new[] {agents[0].Id});
+            Logger.LogInformation("下载器代理分配成功");
+            // 发送消息让下载代理器分配好下载器
+            var message =
+                $"{NewSpiderConsts.AllocateDownloaderCommand}|{JsonConvert.SerializeObject(allotDownloaderMessage)}";
+            foreach (var agent in agents)
+            {
+                await Mq.PublishAsync(agent.Id, message);
+            }
 
-                switch (commandMessage.Command)
-                {
-                    case "Register":
-                    {
-                        var heartbeat = JsonConvert.DeserializeObject<DownloaderAgentHeartbeat>(commandMessage.Message);
-                        await _downloaderAgentStore.RegisterAsync(heartbeat);
-                        break;
-                    }
-                    case "Heartbeat":
-                    {
-                        var heartbeat = JsonConvert.DeserializeObject<DownloaderAgentHeartbeat>(commandMessage.Message);
-                        await _downloaderAgentStore.HeartbeatAsync(heartbeat);
-                        break;
-                    }
-                    case "Allocate":
-                    {
-                        var options = JsonConvert.DeserializeObject<AllotDownloaderMessage>(message);
-                        // TODO: 根据策略分配下载器
-                        var agents = (await _downloaderAgentStore.GetAvailableAsync()).ToArray();
-                        if (agents.Length <= 0)
-                        {
-                            _logger.LogError("未找到活跃的下载器代理");
-                        }
-
-                        foreach (var agent in agents)
-                        {
-                            await _mq.PublishAsync(agent.Id, message);
-                        }
-                        // 保存节点选取信息
-                        await _downloaderAgentStore.AllocateAsync(options.OwnerId, agents.Select(x => x.Id));
-                        break;
-                    }
-                    case "Download":
-                    {
-                        // TODO: 根据策略分配下载器: 1. Request 从哪个下载器返回的需要返回到对应的下载器  2. 随机一个下载器
-                        // 1. 取所有可用 agent
-                        var agents = (await _downloaderAgentStore.GetAvailableAsync()).ToArray();
-                        if (agents.Length <= 0)
-                        {
-                            _logger.LogError("未找到活跃的下载器代理");
-                        }
-
-                        var agentIndex = 0;
-                        foreach (var request in requests)
-                        {
-                            var agent = agents[agentIndex];
-                            agentIndex++;
-                            if (agentIndex >= agents.Length)
-                            {
-                                agentIndex = 0;
-                            }
-
-                            var json = JsonConvert.SerializeObject(new[] {request});
-                            await _mq.PublishAsync(agent.Id.ToString(), $"Download|{json}");
-                        }
-
-                        break;
-                    }
-                }
-            });
-            return Task.CompletedTask;
+            return true;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public override async Task EnqueueRequests(string ownerId, IEnumerable<Request> requests)
         {
-            _mq.Unsubscribe(NewSpiderConsts.DownloaderCenterTopic);
-            _isRunning = false;
-            return Task.CompletedTask;
+            // TODO: 根据策略分配下载器: 1. Request 从哪个下载器返回的需要返回到对应的下载器  2. 随机一个下载器
+            // 1. 取所有可用 agent
+            var agents = await DownloaderAgentStore.GetAllListAsync(ownerId);
+            if (agents.Count <= 0)
+            {
+                Logger.LogError("未找到活跃的下载器代理");
+            }
+            var agent = agents[0];
+            var json = JsonConvert.SerializeObject(requests);
+            await Mq.PublishAsync(agent.Id, $"{NewSpiderConsts.DownloadCommand}|{json}");
         }
     }
 }

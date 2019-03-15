@@ -1,19 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using NewSpider.Downloader;
 
 namespace NewSpider.Scheduler
 {
     public interface IScheduler
     {
-        Task<IEnumerable<IRequest>> PollAsync(string ownerId, int count);
+        Task<IEnumerable<Request>> PollAsync(string ownerId, int count);
 
-        Task PushAsync(string ownerId, IEnumerable<IRequest> requests);
-
-        Task<IEnumerable<Statistics>> GetStatistics(IEnumerable<string> ownerId);
-
-        Task IncSuccess(string ownerId);
-
-        Task IncError(string ownerId);
+        Task<uint> PushAsync(string ownerId, IEnumerable<Request> requests);
     }
 }

@@ -1,16 +1,17 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace NewSpider.Downloader
 {
-    public class EmptyDownloader : IDownloader
+    public class EmptyDownloader : AbstractDownloader
     {
-        public Task<Response> DownloadAsync(Request request)
+        protected override Task<Response> ImplDownloadAsync(Request request)
         {
             return Task.FromResult(new Response
             {
                 Request = request,
-                Content = "hahaha"
-            });            
+                Content = "From empty downloader"
+            });
         }
     }
 }

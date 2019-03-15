@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
 
-namespace NewSpider
+namespace NewSpider.Data
 {
     public interface IDataFlow
     {
-        Task Handle(FlowContext context);
+        Task<bool> Handle(DataFlowContext context);
     }
 }

@@ -15,9 +15,6 @@ namespace NewSpider.Downloader
 {
     internal abstract class AbstractDownloaderAgent : IDownloaderAgent
     {
-        public const string AllotDownloaderCommand = "allot";
-        public const string DownloadCommand = "download";
-
         private bool _isRunning;
 
         private readonly IMessageQueue _mq;
@@ -29,14 +26,14 @@ namespace NewSpider.Downloader
 
         protected ILogger Logger { get; }
 
-        protected AbstractDownloaderAgent(string agentId, string name, IMessageQueue mq)
+        protected AbstractDownloaderAgent(string agentId, string name, IMessageQueue mq, ILoggerFactory loggerFactory)
         {
             Check.NotNull(agentId, nameof(agentId));
             Check.NotNull(name, nameof(name));
             _agentId = agentId;
             _name = name;
             _mq = mq;
-            Logger = Log.CreateLogger(GetType().FullName);
+            Logger = loggerFactory.CreateLogger(GetType().FullName);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -46,10 +43,17 @@ namespace NewSpider.Downloader
                 throw new NewSpiderException("下载器代理正在运行中");
             }
 
+            Logger.LogInformation("本地下载代理启动");
+
             _isRunning = true;
 
             // 注册节点
-            await RegisterAsync();
+            var json = JsonConvert.SerializeObject(new DownloaderAgent
+            {
+                Id = _agentId,
+                Name = _name
+            });
+            await _mq.PublishAsync(NewSpiderConsts.DownloaderCenterTopic, $"{NewSpiderConsts.RegisterCommand}|{json}");
 
             // 开始心跳
             HeartbeatAsync(cancellationToken).ConfigureAwait(false);
@@ -75,12 +79,12 @@ namespace NewSpider.Downloader
 
                     switch (commandMessage.Command)
                     {
-                        case AllotDownloaderCommand:
+                        case NewSpiderConsts.AllocateDownloaderCommand:
                         {
                             await AllotDownloaderAsync(commandMessage.Message);
                             break;
                         }
-                        case DownloadCommand:
+                        case NewSpiderConsts.DownloadCommand:
                         {
                             await DownloadAsync(commandMessage.Message).ConfigureAwait(false);
                             break;
@@ -106,7 +110,53 @@ namespace NewSpider.Downloader
         {
             _mq.Unsubscribe(_agentId);
             _isRunning = false;
+            Logger.LogInformation("本地下载代理退出");
             return Task.CompletedTask;
+        }
+
+        protected virtual Task<DownloaderEntry> CreateDownloaderEntry(AllotDownloaderMessage allotDownloaderMessage)
+        {
+            DownloaderEntry downloaderEntry = null;
+            // TODO: 添加其它下载器的分配方法
+            switch (allotDownloaderMessage.Type)
+            {
+                case DownloaderType.Empty:
+                {
+                    downloaderEntry = new DownloaderEntry
+                    {
+                        LastUsedTime = DateTime.Now,
+                        Downloader = new EmptyDownloader
+                        {
+                            Logger = Logger,
+                            AgentId = _agentId
+                        }
+                    };
+                    break;
+                }
+                case DownloaderType.Sample:
+                {
+                    downloaderEntry = new DownloaderEntry
+                    {
+                        LastUsedTime = DateTime.Now,
+                        Downloader = new SampleDownloader
+                        {
+                            Logger = Logger,
+                            AgentId = _agentId
+                        }
+                    };
+                    break;
+                }
+                case DownloaderType.WebDriver:
+                {
+                    throw new NotImplementedException();
+                }
+                case DownloaderType.HttpClient:
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            return Task.FromResult(downloaderEntry);
         }
 
         private Task HeartbeatAsync(CancellationToken cancellationToken)
@@ -117,20 +167,17 @@ namespace NewSpider.Downloader
                 {
                     Thread.Sleep(5000);
 
-                    await RegisterAsync();
+                    var json = JsonConvert.SerializeObject(new DownloaderAgentHeartbeat
+                    {
+                        Id = _agentId,
+                        Name = _name
+                    });
+                    await _mq.PublishAsync(NewSpiderConsts.DownloaderCenterTopic,
+                        $"{NewSpiderConsts.HeartbeatCommand}|{json}");
                 }
             }, cancellationToken);
         }
 
-        private async Task RegisterAsync()
-        {
-            var json = JsonConvert.SerializeObject(new DownloaderAgentHeartbeat
-            {
-                Id = _agentId,
-                Name = _name
-            });
-            await _mq.PublishAsync(NewSpiderConsts.DownloaderCenterTopic, $"Register|{json}");
-        }
 
         private Task DownloadAsync(string message)
         {
@@ -171,7 +218,6 @@ namespace NewSpider.Downloader
             {
                 var response = await downloaderEntry.Downloader.DownloadAsync(request);
                 downloaderEntry.LastUsedTime = DateTime.Now;
-                Logger.LogInformation($"Task {request.OwnerId} download {request.Url} success");
                 return response;
             }
             else
@@ -205,7 +251,7 @@ namespace NewSpider.Downloader
                         _cache.TryRemove(expiredDownloaderEntry, out _);
                     }
 
-                    Logger.LogDebug("Release downloader");
+                    Logger.LogDebug("释放过期下载器");
                 }
             });
         }
@@ -214,37 +260,15 @@ namespace NewSpider.Downloader
         /// 
         /// </summary>
         /// <returns></returns>
-        private Task AllotDownloaderAsync(string message)
+        private async Task AllotDownloaderAsync(string message)
         {
             var allotDownloaderMessage = JsonConvert.DeserializeObject<AllotDownloaderMessage>(message);
             if (!_cache.ContainsKey(allotDownloaderMessage.OwnerId))
             {
-                DownloaderEntry downloaderEntry = null;
-                // TODO: 添加其它下载器的分配方法
-                switch (allotDownloaderMessage.Type)
-                {
-                    case DownloaderType.Empty:
-                    {
-                        downloaderEntry = new DownloaderEntry
-                        {
-                            LastUsedTime = DateTime.Now,
-                            Downloader = new EmptyDownloader()
-                        };
-                        break;
-                    }
-                    case DownloaderType.WebDriver:
-                    {
-                        throw new NotImplementedException();
-                    }
-                    case DownloaderType.HttpClient:
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
-
+                var downloaderEntry = await CreateDownloaderEntry(allotDownloaderMessage);
                 if (downloaderEntry == null)
                 {
-                    Logger.LogError($"分配下载器失败 {allotDownloaderMessage.Type}");
+                    Logger.LogError($"任务 {allotDownloaderMessage.OwnerId} 分配下载器 {allotDownloaderMessage.Type} 失败");
                 }
                 else
                 {
@@ -253,10 +277,8 @@ namespace NewSpider.Downloader
             }
             else
             {
-                Logger.LogWarning($"已为 {allotDownloaderMessage.OwnerId} 分配下载器");
+                Logger.LogWarning($"任务 {allotDownloaderMessage.OwnerId} 重复分配下载器");
             }
-
-            return Task.CompletedTask;
         }
     }
 

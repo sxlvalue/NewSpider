@@ -22,6 +22,9 @@
       <Compile Update="Spider.Settings.cs">
         <DependentUpon>Spider.cs</DependentUpon>
       </Compile>
+      <Compile Update="Spider.SpeedController.cs">
+        <DependentUpon>Spider.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

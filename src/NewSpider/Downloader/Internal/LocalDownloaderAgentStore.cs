@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using NewSpider.Downloader.Entity;
@@ -10,30 +11,55 @@ namespace NewSpider.Downloader.Internal
 {
     internal class LocalDownloaderAgentStore : IDownloaderAgentStore
     {
-        private static volatile ConcurrentDictionary<string, DownloaderAgentHeartbeat> _agents =
-            new ConcurrentDictionary<string, DownloaderAgentHeartbeat>();
-        private static volatile  ConcurrentDictionary<string, IEnumerable<string>> _allocatedAgents =
+        private static volatile ConcurrentDictionary<string, DownloaderAgent> _agents =
+            new ConcurrentDictionary<string, DownloaderAgent>();
+
+        private static volatile ConcurrentDictionary<string, IEnumerable<string>> _allocatedAgents =
             new ConcurrentDictionary<string, IEnumerable<string>>();
 
-        public Task<IEnumerable<DownloaderAgentHeartbeat>> GetAvailableAsync()
+        public Task<List<DownloaderAgent>> GetAllListAsync()
         {
-            return Task.FromResult(_agents.Values as IEnumerable<DownloaderAgentHeartbeat>);
+            return Task.FromResult(_agents.Values.ToList());
         }
 
-        public Task RegisterAsync(DownloaderAgentHeartbeat agent)
+        public Task<List<DownloaderAgent>> GetAllListAsync(string ownerId)
+        {
+            if (_allocatedAgents.ContainsKey(ownerId))
+            {
+                var agentIds = _allocatedAgents[ownerId].ToList();
+
+                var agents = _agents.Where(x => agentIds.Contains(x.Key)).Select(x => x.Value).ToList();
+                return Task.FromResult(agents);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public Task RegisterAsync(DownloaderAgent agent)
         {
             agent.LastModificationTime = DateTime.Now;
             _agents.TryAdd(agent.Id, agent);
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 本地代理不需要留存心跳
+        /// </summary>
+        /// <param name="agent"></param>
+        /// <returns></returns>
         public Task HeartbeatAsync(DownloaderAgentHeartbeat agent)
         {
-            agent.LastModificationTime = DateTime.Now;
-            _agents[agent.Id] = agent;
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ownerId"></param>
+        /// <param name="agentIds"></param>
+        /// <returns></returns>
         public Task AllocateAsync(string ownerId, IEnumerable<string> agentIds)
         {
             if (_allocatedAgents.ContainsKey(ownerId))
@@ -44,6 +70,7 @@ namespace NewSpider.Downloader.Internal
             {
                 _allocatedAgents.TryAdd(ownerId, agentIds);
             }
+
             return Task.CompletedTask;
         }
     }
