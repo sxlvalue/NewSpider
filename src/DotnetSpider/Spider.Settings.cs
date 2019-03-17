@@ -10,13 +10,13 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        public void AddProcessor(IPageProcessor processor)
+        public void AddProcessor(PageProcessorBase processor)
         {
             processor.Order = ProcessComparer;
             _dataFlows.Add(processor);
         }
 
-        public void AddPipeline(IPipeline pipeline)
+        public void AddPipeline(PipelineBase pipeline)
         {
             pipeline.Order = PipelineComparer;
             _dataFlows.Add(pipeline);
