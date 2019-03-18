@@ -1,44 +1,49 @@
 using System.Collections.Generic;
+using DotnetSpider.Core;
 using DotnetSpider.Downloader;
+using DotnetSpider.Extraction;
 
 namespace DotnetSpider.Data
 {
     public static class DataFlowContextExtensions
     {
-        private const string RequestKey = "Request";
+        private const string RequestKey = "DotnetSpider-Request";
+        private const string ResponseKey = "DotnetSpider-Response";
+        private const string ExtractedRequestsKey = "DotnetSpider-ExtractedRequests";
 
-        public static void AddRequest(this DataFlowContext context, Request request)
+        public static void AddResponse(this DataFlowContext context, Response response)
         {
-            if (context.Properties == null)
-            {
-                context.Properties = new Dictionary<string, dynamic>();
-            }
+            context[ResponseKey] = response;
+        }
 
-            if (!context.Properties.ContainsKey(RequestKey))
+        public static Response GetResponse(this DataFlowContext context)
+        {
+            return context[ResponseKey];
+        }
+
+        public static void AddTargetRequests(this DataFlowContext context, params Request[] requests)
+        {
+            if (!context.ContainsKey(RequestKey))
             {
-                context.Properties.Add(RequestKey, request);
+                context[ExtractedRequestsKey] = new List<Request>(requests);
             }
             else
             {
-                context.Properties[RequestKey] = request;
+                context[ExtractedRequestsKey].AddRange(requests);
             }
         }
 
-        public static Request GetRequest(this DataFlowContext context)
+        public static List<Request> GetTargetRequests(this DataFlowContext context)
         {
-            if (context.Properties == null)
-            {
-                return null;
-            }
+            return context[ExtractedRequestsKey];
+        }
 
-            if (!context.Properties.ContainsKey(RequestKey))
-            {
-                return null;
-            }
-            else
-            {
-                return context.Properties[RequestKey];
-            }
+        public static ISelectable GetSelectable(this DataFlowContext context,
+            ContentType contentType = ContentType.Auto, bool removeOutboundLinks = true)
+        {
+            var response = GetResponse(context);
+
+            return response?.ToSelectable(contentType, removeOutboundLinks);
         }
     }
 }

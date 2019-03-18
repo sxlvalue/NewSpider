@@ -56,7 +56,7 @@ namespace DotnetSpider.Downloader
             await _mq.PublishAsync(DotnetSpiderConsts.DownloaderCenterTopic, $"{DotnetSpiderConsts.RegisterCommand}|{json}");
 
             // 开始心跳
-            HeartbeatAsync(cancellationToken).ConfigureAwait(false);
+            HeartbeatAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
 
             // 订阅节点编号
             _mq.Subscribe(_agentId, async message =>
@@ -108,7 +108,7 @@ namespace DotnetSpider.Downloader
             });
 
             // 循环清理过期下载器
-            ReleaseDownloaderAsync().ConfigureAwait(false);
+            ReleaseDownloaderAsync().ConfigureAwait(false).GetAwaiter();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

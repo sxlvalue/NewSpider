@@ -12,7 +12,7 @@ using Serilog.Events;
 
 namespace DotnetSpider
 {
-    public class LocalSpiderBuilder
+    public class LocalSpiderBuilder : ISpiderBuilder
     {
         private IServiceProvider _serviceProvider;
 

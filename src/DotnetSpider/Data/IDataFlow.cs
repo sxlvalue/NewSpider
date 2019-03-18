@@ -9,6 +9,6 @@ namespace DotnetSpider.Data
         
         ILogger Logger { get; set; }
         
-        Task<bool> Handle(DataFlowContext context);
+        Task<DataFlowResult> Handle(DataFlowContext context);
     }
 }

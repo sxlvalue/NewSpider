@@ -1,3 +1,6 @@
+using DotnetSpider.Core;
+using DotnetSpider.Extraction;
+
 namespace DotnetSpider.Downloader
 {
     public class Response
@@ -11,7 +14,7 @@ namespace DotnetSpider.Downloader
         public string AgentId { get; set; }
 
         public bool Success { get; set; }
-        
+
         public long ElapsedMilliseconds { get; set; }
     }
 }

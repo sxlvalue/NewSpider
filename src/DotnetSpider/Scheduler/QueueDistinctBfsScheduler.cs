@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
 
@@ -38,7 +39,7 @@ namespace DotnetSpider.Scheduler
                 var requests = _requests[ownerId].Take(count).ToArray();
                 if (requests.Length > 0)
                 {
-                    _requests[ownerId].RemoveRange(0, count);
+                    _requests[ownerId].RemoveRange(0, requests.Length);
                 }
 
                 return requests;

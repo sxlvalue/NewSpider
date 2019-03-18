@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp2.2</TargetFramework>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
@@ -23,13 +22,10 @@
       <Compile Update="Spider.Settings.cs">
         <DependentUpon>Spider.cs</DependentUpon>
       </Compile>
-      <Compile Update="Spider.SpeedController.cs">
-        <DependentUpon>Spider.cs</DependentUpon>
-      </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Selector" />
+      <Folder Include="HtmlAgilityPack.Css" />
     </ItemGroup>
 
 </Project>

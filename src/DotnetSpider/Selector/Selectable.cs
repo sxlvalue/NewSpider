@@ -13,7 +13,7 @@ namespace DotnetSpider.Extraction
 		/// <summary>
 		/// 构造方法
 		/// </summary>
-		/// <param name="html">Html</param>
+		/// <param name="html">内容</param>
 		/// <param name="url">URL相对路径补充</param>
 		/// <param name="removeOutboundLinks">是否去除外链</param>
 		public Selectable(string html, string url, bool removeOutboundLinks = true)
@@ -54,27 +54,27 @@ namespace DotnetSpider.Extraction
 			Elements = nodes;
 		}
 
-//		/// <summary>
-//		/// 通过Css 选择器查找结果
-//		/// </summary>
-//		/// <param name="css">Css 选择器</param>
-//		/// <returns>查询接口</returns>
-//		public override ISelectable Css(string css)
-//		{
-//			return SelectList(Selectors.Css(css));
-//		}
-//
-//		/// <summary>
-//		/// 通过Css 选择器查找元素, 并取得属性的值
-//		/// </summary>
-//		/// <param name="css">Css 选择器</param>
-//		/// <param name="attrName">查询到的元素的属性</param>
-//		/// <returns>查询接口</returns>
-//		public override ISelectable Css(string css, string attrName)
-//		{
-//			var cssSelector = Selectors.Css(css, attrName);
-//			return SelectList(cssSelector);
-//		}
+		/// <summary>
+		/// 通过Css 选择器查找结果
+		/// </summary>
+		/// <param name="css">Css 选择器</param>
+		/// <returns>查询接口</returns>
+		public override ISelectable Css(string css)
+		{
+			return SelectList(Selectors.Css(css));
+		}
+
+		/// <summary>
+		/// 通过Css 选择器查找元素, 并取得属性的值
+		/// </summary>
+		/// <param name="css">Css 选择器</param>
+		/// <param name="attrName">查询到的元素的属性</param>
+		/// <returns>查询接口</returns>
+		public override ISelectable Css(string css, string attrName)
+		{
+			var cssSelector = Selectors.Css(css, attrName);
+			return SelectList(cssSelector);
+		}
 
 		/// <summary>
 		/// 通过共用属性查找进村

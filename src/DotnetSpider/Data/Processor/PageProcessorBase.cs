@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using DotnetSpider.Downloader;
+using DotnetSpider.Extraction;
 using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Data.Processor
@@ -12,42 +15,93 @@ namespace DotnetSpider.Data.Processor
         /// 日志接口
         /// </summary>
         public ILogger Logger { get; set; }
-        
-        /// <summary>
-        /// 用于判断是否需要处理当前 Request, 以及解析出来的目标链接是否需要添加到队列.
-        /// RequestExtractor 解析出来的结果也需验证是否符合 Filter, 如果不符合 Filter 那么最终也不会进入到 Processor, 即为无意义的 Request
-        /// </summary>
-        public IPageFilter Filter { get; set; }
-        
-        /// <summary>
-        /// 是否最后一页的判断接口, 如果是最后一页, 则不需要执行 RequestExtractor
-        /// </summary>
-        public ILastPageChecker LastPageChecker { get; set; }
-        
-        /// <summary>
-        /// 去掉链接#后面的所有内容
-        /// </summary>
-        public bool CleanPound { get; set; }
-        
-        /// <summary>
-        /// 是否去除外链
-        /// </summary>
-        public bool RemoveOutboundLinks { get; set; }
 
-        public async Task<bool> Handle(DataFlowContext context)
+        /// <summary>
+        /// 配置 PageProcessor 是否对深度为1的链接进行正则筛选
+        /// </summary>
+        public bool IgnoreFilterDefaultRequest { get; set; } = true;
+
+        public IPageFilter PageFilter { get; set; }
+
+        public bool CleanPoundInTargetRequest { get; set; }
+
+        public Func<DataFlowContext, ISelectable> Selectable { get; set; }
+
+        public ITargetRequestResolver TargetRequestResolver { get; set; }
+
+        public async Task<DataFlowResult> Handle(DataFlowContext context)
         {
             try
             {
-                await Process(context);
-                return true;
+                var response = context.GetResponse();
+                if (response == null)
+                {
+                    Logger.LogError("未找到回复信息，无法解析数据");
+                    return DataFlowResult.Failed;
+                }
+
+                var request = response.Request;
+                if (request == null)
+                {
+                    Logger.LogError("未找到请求信息，无法解析数据");
+                    return DataFlowResult.Failed;
+                }
+
+                if (!(request.Depth == 1 && !IgnoreFilterDefaultRequest))
+                {
+                    // 如果不匹配则终止数据流程
+                    if (PageFilter != null && !PageFilter.Check(request))
+                    {
+                        return DataFlowResult.Terminated;
+                    }
+                }
+
+                if (Selectable == null)
+                {
+                    Selectable = c => c.GetSelectable();
+                }
+
+                var selectable = Selectable(context);
+                //TODO: 添加更多的属性
+                selectable.Properties.Add("URL", request.Url);
+
+                var items = await Process(selectable);
+                context.AddDataItems(items);
+
+                var requests = TargetRequestResolver?.Resolver(selectable);
+                if (requests != null && requests.Length > 0)
+                {
+                    var validRequests = new List<Request>();
+                    foreach (var _ in requests)
+                    {
+                        if (PageFilter != null && !PageFilter.Check(request)) continue;
+
+                        validRequests.Add(CleanPoundInTargetRequest
+                            ? CreateNewRequest(request, _.Split('#')[0])
+                            : CreateNewRequest(request, _));
+                    }
+
+                    context.AddTargetRequests(validRequests.ToArray());
+                }
+
+                return DataFlowResult.Success;
             }
             catch (Exception e)
             {
                 Logger?.LogError($"数据解析发生异常: {e}");
-                return false;
+                return DataFlowResult.Failed;
             }
         }
 
-        protected abstract Task Process(DataFlowContext context);
+        protected virtual Request CreateNewRequest(Request source, string url)
+        {
+            var request = new Request {Url = url, Depth = source.Depth, Body = source.Body, Method = source.Method};
+            request.AgentId = source.AgentId;
+            request.RetriedTimes = 0;
+            request.OwnerId = source.OwnerId;
+            return request;
+        }
+
+        protected abstract Task<Dictionary<string, List<dynamic>>> Process(ISelectable selectable);
     }
 }

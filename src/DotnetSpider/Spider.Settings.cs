@@ -12,22 +12,28 @@ namespace DotnetSpider
     {
         public void AddProcessor(PageProcessorBase processor)
         {
+            Check.NotNull(processor, nameof(processor));
             processor.Order = ProcessComparer;
+            processor.Logger = _loggerFactory.CreateLogger(processor.GetType());
             _dataFlows.Add(processor);
         }
 
         public void AddPipeline(PipelineBase pipeline)
         {
+            Check.NotNull(pipeline, nameof(pipeline));
             pipeline.Order = PipelineComparer;
+            pipeline.Logger = _loggerFactory.CreateLogger(pipeline.GetType());
             _dataFlows.Add(pipeline);
         }
 
         public void AddDataFlow(IDataFlow dataFlow)
         {
-            if (dataFlow.Order < 2)
+            if (dataFlow.Order < 0)
             {
                 throw new DotnetSpiderException("排序标识必须大于或等于 2");
             }
+
+            dataFlow.Logger = _loggerFactory.CreateLogger(dataFlow.GetType());
 
             _dataFlows.Add(dataFlow);
         }
@@ -38,17 +44,34 @@ namespace DotnetSpider
             foreach (var request in requests)
             {
                 request.OwnerId = Id;
+                request.Depth = 1;
                 _requests.Add(request);
                 if (_requests.Count % EnqueueBatchCount == 0)
                 {
-                    PushRequests();
+                    EnqueueRequests();
                 }
             }
 
             return this;
         }
 
-        private void PushRequests()
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public ISpider AddRequests(params string[] urls)
+        {
+            foreach (var url in urls)
+            {
+                var request = new Request {Url = url, OwnerId = Id, Depth = 1};
+                _requests.Add(request);
+                if (_requests.Count % EnqueueBatchCount == 0)
+                {
+                    EnqueueRequests();
+                }
+            }
+
+            return this;
+        }
+
+        private void EnqueueRequests()
         {
             if (_requests.Count <= 0) return;
 

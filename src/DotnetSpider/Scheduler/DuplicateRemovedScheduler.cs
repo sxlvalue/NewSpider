@@ -53,7 +53,7 @@ namespace DotnetSpider.Scheduler
             return count;
         }
 
-        private void ComputeHash(Request request)
+        protected virtual void ComputeHash(Request request)
         {
             var content = $"{request.OwnerId}{request.Url}{request.Method}{request.Body}";
             request.Hash = content.ToMd5();

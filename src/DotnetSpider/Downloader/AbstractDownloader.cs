@@ -18,6 +18,8 @@ namespace DotnetSpider.Downloader
             stopwatch.Start();
             var response = await ImplDownloadAsync(request);
             stopwatch.Stop();
+            response.AgentId = AgentId;
+            response.Request.AgentId = AgentId;
             response.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
             return response;
         }

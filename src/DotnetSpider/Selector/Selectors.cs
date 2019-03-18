@@ -44,38 +44,38 @@ namespace DotnetSpider.Extraction
 			return Cache[key];
 		}
 
-//		/// <summary>
-//		/// 创建Css查询器
-//		/// </summary>
-//		/// <param name="expr">Css表达式</param>
-//		/// <returns>查询器</returns>
-//		[MethodImpl(MethodImplOptions.Synchronized)]
-//		public static ISelector Css(string expr)
-//		{
-//			var key = $"c_{expr}";
-//			if (!Cache.ContainsKey(key))
-//			{
-//				Cache.Add(key, new CssSelector(expr));
-//			}
-//			return Cache[key];
-//		}
-//
-//		/// <summary>
-//		/// 创建Css查询器
-//		/// </summary>
-//		/// <param name="expr">Css表达式</param>
-//		/// <param name="attrName">属性名称</param>
-//		/// <returns>查询器</returns>
-//		[MethodImpl(MethodImplOptions.Synchronized)]
-//		public static ISelector Css(string expr, string attrName)
-//		{
-//			var key = $"c_{expr}_{attrName}";
-//			if (!Cache.ContainsKey(key))
-//			{
-//				Cache.Add(key, new CssSelector(expr, attrName));
-//			}
-//			return Cache[key];
-//		}
+		/// <summary>
+		/// 创建Css查询器
+		/// </summary>
+		/// <param name="expr">Css表达式</param>
+		/// <returns>查询器</returns>
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		public static ISelector Css(string expr)
+		{
+			var key = $"c_{expr}";
+			if (!Cache.ContainsKey(key))
+			{
+				Cache.Add(key, new CssSelector(expr));
+			}
+			return Cache[key];
+		}
+
+		/// <summary>
+		/// 创建Css查询器
+		/// </summary>
+		/// <param name="expr">Css表达式</param>
+		/// <param name="attrName">属性名称</param>
+		/// <returns>查询器</returns>
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		public static ISelector Css(string expr, string attrName)
+		{
+			var key = $"c_{expr}_{attrName}";
+			if (!Cache.ContainsKey(key))
+			{
+				Cache.Add(key, new CssSelector(expr, attrName));
+			}
+			return Cache[key];
+		}
 
 		/// <summary>
 		/// 创建XPath查询器

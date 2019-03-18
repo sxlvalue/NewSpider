@@ -27,6 +27,7 @@ namespace DotnetSpider
         private readonly IScheduler _scheduler;
         private readonly IDownloadService _downloadService;
         private readonly IStatisticsStore _statisticsService;
+        private readonly ILoggerFactory _loggerFactory;
         private DateTime _lastRequestedTime;
 
         private Status _status;
@@ -36,8 +37,29 @@ namespace DotnetSpider
         private double _speed;
         private int _speedControllerInterval = 1000;
         private int _dequeueBatchCount = 1;
+        private int _depth = int.MaxValue;
 
-        public event RequestHandler PretreatmentDownload;
+        public event Action<Request> OnDownloading;
+
+        public DownloaderType DownloaderType { get; set; } = DownloaderType.Sample;
+
+        /// <summary>
+        /// 遍历深度
+        /// </summary>
+        /// <exception cref="ArgumentException"></exception>
+        public int Depth
+        {
+            get => _depth;
+            set
+            {
+                if (value <= 0)
+                {
+                    throw new ArgumentException("遍历深度必须大于 0");
+                }
+
+                _depth = value;
+            }
+        }
 
         /// <summary>
         /// 每秒尝试下载多少个请求
@@ -100,6 +122,8 @@ namespace DotnetSpider
 
         public string Name { get; set; }
 
+        public string Cookie { get; set; }
+
 
         public int RetryDownloadTimes
         {
@@ -142,8 +166,8 @@ namespace DotnetSpider
             _scheduler = scheduler;
             _statisticsService = statisticsService;
             _mq = mq;
-
-            _logger = loggerFactory.CreateLogger(typeof(Spider).Name);
+            _loggerFactory = loggerFactory;
+            _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
         }
 
         public Task RunAsync()
@@ -156,10 +180,10 @@ namespace DotnetSpider
                     // 添加任务启动的监控信息
                     await _statisticsService.StartAsync(Id);
 
-                    PushRequests();
+                    EnqueueRequests();
 
                     // 数据处理流程排序
-                    _dataFlows.Sort();
+                    _dataFlows.Sort(new DataFlowComparer());
 
                     // 分配下载器: 可以通过消息队列(本地模式)或者HTTP接口(配合Portal)分配
                     var allocated = await AllotDownloaderAsync();
@@ -171,7 +195,7 @@ namespace DotnetSpider
                     _logger.LogInformation($"任务 {Id} 分配下载器成功");
 
                     // 启动速度控制器
-                    StartSpeedControllerAsync().ConfigureAwait(false);
+                    StartSpeedControllerAsync().ConfigureAwait(false).GetAwaiter();
 
                     // 订阅数据流
                     _mq.Subscribe($"{DotnetSpiderConsts.ResponseHandlerTopic}{Id}",
@@ -220,10 +244,11 @@ namespace DotnetSpider
             return await _downloadService.AllocateAsync(new AllotDownloaderMessage
             {
                 OwnerId = Id,
-                Type = DownloaderType.Sample,
+                Type = DownloaderType,
                 Speed = Speed,
                 UseProxy = false,
-                DownloaderCount = DownloaderCount
+                DownloaderCount = DownloaderCount,
+                Cookie = Cookie
             });
         }
 
@@ -261,24 +286,50 @@ namespace DotnetSpider
                 _logger.LogInformation($"任务 {Id} 下载 {response.Request.Url} 成功");
 
                 var context = new DataFlowContext();
-                context.AddRequest(response.Request);
+                context.AddResponse(response);
                 try
                 {
                     bool success = true;
                     foreach (var dataFlow in _dataFlows)
                     {
-                        success = await dataFlow.Handle(context);
-                        if (!success)
+                        var dataFlowResult = await dataFlow.Handle(context);
+                        switch (dataFlowResult)
                         {
-                            break;
+                            case DataFlowResult.Success:
+                            {
+                                continue;
+                            }
+                            case DataFlowResult.Failed:
+                            {
+                                success = false;
+                                break;
+                            }
+                            case DataFlowResult.Terminated:
+                            {
+                                break;
+                            }
                         }
                     }
 
                     // 解析的目标请求
-                    if (context.Properties != null && context.Properties.ContainsKey("ExtractedRequests"))
+                    var targetRequests = context.GetTargetRequests();
+                    if (targetRequests != null && targetRequests.Count > 0)
                     {
-                        var count = _scheduler.Enqueue(context.Properties["ExtractedRequests"]);
-                        await _statisticsService.IncrementTotalAsync(Id, count);
+                        var validTargetRequest = new List<Request>();
+                        foreach (var targetRequest in targetRequests)
+                        {
+                            targetRequest.Depth = response.Request.Depth + 1;
+                            if (targetRequest.Depth <= Depth)
+                            {
+                                validTargetRequest.Add(targetRequest);
+                            }
+                        }
+
+                        var count = _scheduler.Enqueue(validTargetRequest);
+                        if (count > 0)
+                        {
+                            await _statisticsService.IncrementTotalAsync(Id, count);
+                        }
                     }
 
                     if (success)
@@ -346,6 +397,59 @@ namespace DotnetSpider
             var statistics = await _statisticsService.GetSpiderStatisticsAsync(Id);
             _logger.LogTrace(
                 $"任务 {Id} 总计 {statistics.Total}, 成功 {statistics.Success}, 失败 {statistics.Failed}, 剩余 {(statistics.Total - statistics.Success - statistics.Failed)}");
+        }
+
+        private Task StartSpeedControllerAsync()
+        {
+            return Task.Factory.StartNew(async () =>
+            {
+                _logger.LogInformation($"任务 {Id} 速度控制器启动");
+                bool @break = false;
+
+
+                while (!@break)
+                {
+                    Thread.Sleep(_speedControllerInterval);
+
+                    switch (_status)
+                    {
+                        case Status.Running:
+                        {
+                            try
+                            {
+                                var requests = _scheduler.Dequeue(Id, _dequeueBatchCount);
+                                foreach (var request in requests)
+                                {
+                                    OnDownloading?.Invoke(request);
+                                }
+
+                                if (requests.Length > 0)
+                                {
+                                    await _downloadService.EnqueueRequests(Id, requests);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.LogError($"速度控制器运转失败: {e}");
+                            }
+
+                            break;
+                        }
+                        case Status.Paused:
+                        {
+                            _logger.LogInformation($"任务 {Id} 速度控制器暂停");
+                            break;
+                        }
+                        case Status.Exited:
+                        {
+                            @break = true;
+                            break;
+                        }
+                    }
+                }
+
+                _logger.LogInformation($"任务 {Id} 速度控制器退出");
+            });
         }
     }
 }

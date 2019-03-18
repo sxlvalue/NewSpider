@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -10,20 +11,20 @@ namespace DotnetSpider.Data.Pipeline
 
         public ILogger Logger { get; set; }
 
-        public async Task<bool> Handle(DataFlowContext context)
+        public async Task<DataFlowResult> Handle(DataFlowContext context)
         {
             try
             {
-                await Process(context);
-                return true;
+                await Process(context.DataItems);
+                return DataFlowResult.Success;
             }
             catch (Exception e)
             {
                 Logger?.LogError($"数据管道发生异常: {e}");
-                return false;
+                return DataFlowResult.Failed;
             }
         }
 
-        protected abstract Task Process(DataFlowContext context);
+        protected abstract Task Process(Dictionary<string, List<dynamic>> items);
     }
 }
