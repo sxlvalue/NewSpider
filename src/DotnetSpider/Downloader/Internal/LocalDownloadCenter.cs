@@ -13,8 +13,7 @@ namespace DotnetSpider.Downloader.Internal
     public class LocalDownloadCenter : AbstractDownloadCenter
     {
         public LocalDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore,
-            IStatisticsStore statisticsService,
-            ILoggerFactory loggerFactory) : base(mq, downloaderAgentStore, statisticsService, loggerFactory)
+            ILoggerFactory loggerFactory) : base(mq, downloaderAgentStore, loggerFactory)
         {
         }
 
@@ -62,6 +61,7 @@ namespace DotnetSpider.Downloader.Internal
             {
                 Logger.LogError("未找到活跃的下载器代理");
             }
+
             var agent = agents[0];
             var json = JsonConvert.SerializeObject(requests);
             await Mq.PublishAsync(agent.Id, $"{DotnetSpiderConsts.DownloadCommand}|{json}");

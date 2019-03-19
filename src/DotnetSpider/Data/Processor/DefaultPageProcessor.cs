@@ -12,8 +12,6 @@ namespace DotnetSpider.Data.Processor
         {
             var result = new
             {
-                Title = selectable.XPath("//title").GetValue(),
-                // Html = selectable.GetValue(ValueOption.OuterHtml),
                 Url = selectable.Environment("URL")
             };
             return Task.FromResult(new Dictionary<string, List<dynamic>>

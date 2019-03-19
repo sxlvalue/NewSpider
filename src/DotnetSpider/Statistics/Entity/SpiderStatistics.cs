@@ -1,7 +1,7 @@
 using System;
 using DotnetSpider.Core;
 
-namespace DotnetSpider.Statistics
+namespace DotnetSpider.Statistics.Entity
 {
     public class SpiderStatistics
     {

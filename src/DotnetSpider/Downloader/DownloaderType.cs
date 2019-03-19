@@ -6,6 +6,6 @@ namespace DotnetSpider.Downloader
         HttpClient,
         WebDriver,
         ChromeExtension,
-        Sample
+        Default
     }
 }

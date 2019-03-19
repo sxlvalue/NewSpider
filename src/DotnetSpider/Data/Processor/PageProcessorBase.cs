@@ -4,22 +4,26 @@ using System.Threading.Tasks;
 using DotnetSpider.Downloader;
 using DotnetSpider.Extraction;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace DotnetSpider.Data.Processor
 {
     public abstract class PageProcessorBase : IDataFlow
     {
+        private IDataFlow _parser;
+        
+        protected PageProcessorBase(IDataFlow parser)
+        {
+            _parser = parser;
+        }
+        
         public int Order { get; set; }
 
         /// <summary>
         /// 日志接口
         /// </summary>
         public ILogger Logger { get; set; }
-
-        /// <summary>
-        /// 配置 PageProcessor 是否对深度为1的链接进行正则筛选
-        /// </summary>
-        public bool IgnoreFilterDefaultRequest { get; set; } = true;
 
         public IPageFilter PageFilter { get; set; }
 
@@ -47,26 +51,15 @@ namespace DotnetSpider.Data.Processor
                     return DataFlowResult.Failed;
                 }
 
-                if (!(request.Depth == 1 && !IgnoreFilterDefaultRequest))
+                // 如果不匹配则终止数据流程
+                if (PageFilter != null && !PageFilter.Check(request))
                 {
-                    // 如果不匹配则终止数据流程
-                    if (PageFilter != null && !PageFilter.Check(request))
-                    {
-                        return DataFlowResult.Terminated;
-                    }
+                    return DataFlowResult.Terminated;
                 }
 
-                if (Selectable == null)
-                {
-                    Selectable = c => c.GetSelectable();
-                }
-
-                var selectable = Selectable(context);
-                //TODO: 添加更多的属性
-                selectable.Properties.Add("URL", request.Url);
-
-                var items = await Process(selectable);
-                context.AddDataItems(items);
+                _parser.Logger = Logger;
+                
+                var result =await _parser.Handle(context);
 
                 var requests = TargetRequestResolver?.Resolver(selectable);
                 if (requests != null && requests.Length > 0)

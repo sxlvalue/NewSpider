@@ -46,6 +46,7 @@ namespace DotnetSpider.Data
 
         public void AddDataItems(Dictionary<string, List<dynamic>> items)
         {
+            
             if (items == null)
             {
                 return;

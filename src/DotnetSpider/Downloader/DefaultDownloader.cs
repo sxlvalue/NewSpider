@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Downloader
 {
-    public class SampleDownloader : AbstractDownloader
+    public class DefaultDownloader : AbstractDownloader
     {
         private static readonly HttpClient HttpClient = new HttpClient();
         // private static readonly int ThrowExceptionInterval = 10;

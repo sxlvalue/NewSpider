@@ -19,14 +19,12 @@ namespace DotnetSpider.Downloader
         protected readonly IMessageQueue Mq;
         protected readonly ILogger Logger;
         protected readonly IDownloaderAgentStore DownloaderAgentStore;
-        protected readonly IStatisticsStore StatisticsService;
-        
-        public AbstractDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore, IStatisticsStore statisticsService,
+
+        public AbstractDownloadCenter(IMessageQueue mq, IDownloaderAgentStore downloaderAgentStore,
             ILoggerFactory loggerFactory)
         {
             Mq = mq;
             DownloaderAgentStore = downloaderAgentStore;
-            StatisticsService = statisticsService;
             Logger = loggerFactory.CreateLogger<LocalDownloadCenter>();
         }
 
@@ -39,7 +37,7 @@ namespace DotnetSpider.Downloader
         /// <param name="requests"></param>
         /// <returns></returns>
         public abstract Task EnqueueRequests(string ownerId, IEnumerable<Request> requests);
-        
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             if (_isRunning)

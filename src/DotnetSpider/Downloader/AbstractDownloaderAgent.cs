@@ -138,12 +138,12 @@ namespace DotnetSpider.Downloader
                     };
                     break;
                 }
-                case DownloaderType.Sample:
+                case DownloaderType.Default:
                 {
                     downloaderEntry = new DownloaderEntry
                     {
                         LastUsedTime = DateTime.Now,
-                        Downloader = new SampleDownloader
+                        Downloader = new DefaultDownloader
                         {
                             Logger = Logger,
                             AgentId = _agentId

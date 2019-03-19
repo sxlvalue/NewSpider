@@ -38,7 +38,7 @@ namespace DotnetSpider.Data
             return context[ExtractedRequestsKey];
         }
 
-        public static ISelectable GetSelectable(this DataFlowContext context,
+        public static ISelectable CreateSelectable(this DataFlowContext context,
             ContentType contentType = ContentType.Auto, bool removeOutboundLinks = true)
         {
             var response = GetResponse(context);

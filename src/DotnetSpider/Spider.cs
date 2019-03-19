@@ -26,7 +26,7 @@ namespace DotnetSpider
         private readonly ILogger _logger;
         private readonly IScheduler _scheduler;
         private readonly IDownloadService _downloadService;
-        private readonly IStatisticsStore _statisticsService;
+        private readonly IStatisticsService _statisticsService;
         private readonly ILoggerFactory _loggerFactory;
         private DateTime _lastRequestedTime;
 
@@ -41,7 +41,7 @@ namespace DotnetSpider
 
         public event Action<Request> OnDownloading;
 
-        public DownloaderType DownloaderType { get; set; } = DownloaderType.Sample;
+        public DownloaderType DownloaderType { get; set; } = DownloaderType.Default;
 
         /// <summary>
         /// 遍历深度
@@ -159,7 +159,7 @@ namespace DotnetSpider
         }
 
         public Spider(IMessageQueue mq,
-            IDownloadService downloadService, IStatisticsStore statisticsService, IScheduler scheduler,
+            IDownloadService downloadService, IStatisticsService statisticsService, IScheduler scheduler,
             ILoggerFactory loggerFactory)
         {
             _downloadService = downloadService;
@@ -217,7 +217,7 @@ namespace DotnetSpider
                     // 添加任务退出的监控信息
                     await _statisticsService.ExitAsync(Id);
 
-                    await PrintStatistics();
+                    await _statisticsService.PrintStatisticsAsync(Id);
                 }
             });
         }
@@ -387,16 +387,9 @@ namespace DotnetSpider
                 if (waited > StatisticsInterval)
                 {
                     waited = 0;
-                    await PrintStatistics();
+                    await _statisticsService.PrintStatisticsAsync(Id);
                 }
             }
-        }
-
-        private async Task PrintStatistics()
-        {
-            var statistics = await _statisticsService.GetSpiderStatisticsAsync(Id);
-            _logger.LogTrace(
-                $"任务 {Id} 总计 {statistics.Total}, 成功 {statistics.Success}, 失败 {statistics.Failed}, 剩余 {(statistics.Total - statistics.Success - statistics.Failed)}");
         }
 
         private Task StartSpeedControllerAsync()

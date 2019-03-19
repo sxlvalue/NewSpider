@@ -26,7 +26,9 @@ namespace DotnetSpider
             Services.AddSingleton<IDownloadCenter, LocalDownloadCenter>();
             Services.AddSingleton<IDownloaderAgentStore, LocalDownloaderAgentStore>();
             Services.AddSingleton<IDownloadService, LocalDownloadCenter>();
+            Services.AddSingleton<IStatisticsService, StatisticsService>();
             Services.AddSingleton<IStatisticsStore, MemoryStatisticsStore>();
+            Services.AddSingleton<IStatisticsCenter, StatisticsCenter>();
             Services.AddTransient<ISpider, Spider>();
         }
 
@@ -81,11 +83,14 @@ namespace DotnetSpider
             if (_serviceProvider == null)
             {
                 Services.AddSingleton(LoggerFactory);
+
                 _serviceProvider = Services.BuildServiceProvider();
 
                 _serviceProvider.GetRequiredService<IDownloadCenter>().StartAsync(default)
                     .ConfigureAwait(false);
                 _serviceProvider.GetRequiredService<IDownloaderAgent>().StartAsync(default)
+                    .ConfigureAwait(false);
+                _serviceProvider.GetRequiredService<IStatisticsCenter>().StartAsync(default)
                     .ConfigureAwait(false);
             }
 
