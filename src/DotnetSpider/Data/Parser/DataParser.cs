@@ -6,9 +6,9 @@ using DotnetSpider.Downloader;
 
 namespace DotnetSpider.Data.Parser
 {
-    public class DataParser : DataParserBase, IDataParser
+    public class DataParser : DataParserBase
     {
-        public override Task<DataFlowResult> Parse(DataFlowContext context)
+        protected override Task<DataFlowResult> Parse(DataFlowContext context)
         {
             var response = context.GetResponse();
             context.AddItem("URL", response.Request.Url);

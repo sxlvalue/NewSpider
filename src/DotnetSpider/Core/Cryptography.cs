@@ -48,10 +48,10 @@ namespace DotnetSpider.Core
         {
             var cryptoProvider = new DESCryptoServiceProvider();
             var bytes = Encoding.ASCII.GetBytes(key);
-            var encryptor = cryptoProvider.CreateEncryptor(bytes, bytes);
+            var crypto = cryptoProvider.CreateEncryptor(bytes, bytes);
 
             var ms = new MemoryStream();
-            var cst = new CryptoStream(ms, encryptor, CryptoStreamMode.Write);
+            var cst = new CryptoStream(ms, crypto, CryptoStreamMode.Write);
             var sw = new StreamWriter(cst);
             sw.Write(str);
             sw.Flush();

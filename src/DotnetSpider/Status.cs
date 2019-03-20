@@ -21,8 +21,13 @@ namespace DotnetSpider
         Paused = 2,
 
         /// <summary>
-        /// 完成
+        /// 退出中
         /// </summary>
-        Exited = 4
+        Exiting = 4,
+
+        /// <summary>
+        /// 退出完成
+        /// </summary>
+        Exited = 8
     }
 }

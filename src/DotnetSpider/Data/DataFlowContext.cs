@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
@@ -5,58 +6,44 @@ namespace DotnetSpider.Data
 {
     public class DataFlowContext
     {
-        private readonly Dictionary<string, dynamic> _properties = new Dictionary<string, dynamic>();
+        private readonly ConcurrentDictionary<string, dynamic> _properties = new ConcurrentDictionary<string, dynamic>();
 
-        private readonly Dictionary<string, dynamic> _items = new Dictionary<string, dynamic>();
+        private readonly ConcurrentDictionary<string, dynamic> _items = new ConcurrentDictionary<string, dynamic>();
 
         public string Result { get; set; }
 
         public dynamic this[string key]
         {
-            get
-            {
-                lock (this)
-                {
-                    return _properties.ContainsKey(key) ? _properties[key] : null;
-                }
-            }
+            get => _properties.ContainsKey(key) ? _properties[key] : null;
             set
             {
-                lock (this)
+                if (_properties.ContainsKey(key))
                 {
-                    if (_properties.ContainsKey(key))
-                    {
-                        _properties[key] = value;
-                    }
+                    _properties[key] = value;
+                }
 
-                    else
-                    {
-                        _properties.Add(key, value);
-                    }
+                else
+                {
+                    _properties.TryAdd(key, value);
                 }
             }
         }
 
-        public bool ContainsKey(string key)
+        public bool Contains(string key)
         {
-            lock (this)
-            {
-                return _properties.ContainsKey(key);
-            }
+            return _properties.ContainsKey(key);
         }
 
         public void AddItem(string name, dynamic value)
         {
-            lock (this)
+            if (_items.ContainsKey(name))
             {
-                if (!_items.ContainsKey(name))
-                {
-                    _items.Add(name, value);
-                }
-                else
-                {
-                    _items[name] = value;
-                }
+                _items[name] = value;
+            }
+
+            else
+            {
+                _items.TryAdd(name, value);
             }
         }
 

@@ -30,7 +30,7 @@ namespace DotnetSpider.Statistics
         {
             if (_isRunning)
             {
-                throw new DotnetSpiderException("统计中心正在运行中");
+                throw new SpiderException("统计中心正在运行中");
             }
 
             _logger.LogInformation("统计中心启动");

@@ -10,46 +10,16 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        public void AddDataParser(IDataParser parser)
+        public Spider AddDataFlow(IDataFlow dataFlow)
         {
-            Check.NotNull(parser, nameof(parser));
-
-            if (parser.Order < DataParserComparer || parser.Order > StorageComparer)
-            {
-                parser.Order = DataParserComparer;
-            }
-
-            parser.Logger = _loggerFactory.CreateLogger(parser.GetType());
-            _dataFlows.Add(parser);
-        }
-
-        public void AddStorage(IStorage storage)
-        {
-            Check.NotNull(storage, nameof(storage));
-
-            if (storage.Order < StorageComparer)
-            {
-                storage.Order = StorageComparer;
-            }
-
-            storage.Logger = _loggerFactory.CreateLogger(storage.GetType());
-            _dataFlows.Add(storage);
-        }
-
-        public void AddDataFlow(IDataFlow dataFlow)
-        {
-            if (dataFlow.Order < 0)
-            {
-                throw new DotnetSpiderException("排序标识必须大于或等于 2");
-            }
-
+            CheckIfRunning();
             dataFlow.Logger = _loggerFactory.CreateLogger(dataFlow.GetType());
-
             _dataFlows.Add(dataFlow);
+            return this;
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public ISpider AddRequests(params Request[] requests)
+        public Spider AddRequests(params Request[] requests)
         {
             foreach (var request in requests)
             {
@@ -66,7 +36,7 @@ namespace DotnetSpider
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public ISpider AddRequests(params string[] urls)
+        public Spider AddRequests(params string[] urls)
         {
             foreach (var url in urls)
             {

@@ -73,6 +73,6 @@ namespace DotnetSpider.Data.Parser
             return request;
         }
 
-        public abstract Task<DataFlowResult> Parse(DataFlowContext context);
+        protected abstract Task<DataFlowResult> Parse(DataFlowContext context);
     }
 }

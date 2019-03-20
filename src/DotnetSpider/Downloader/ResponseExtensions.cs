@@ -30,7 +30,7 @@ namespace DotnetSpider.Downloader
                     }
                     else
                     {
-                        throw new DotnetSpiderException("内容不是合法的 Json");
+                        throw new SpiderException("内容不是合法的 Json");
                     }
                 }
                 default:

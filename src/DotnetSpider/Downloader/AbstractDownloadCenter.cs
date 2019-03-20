@@ -42,7 +42,7 @@ namespace DotnetSpider.Downloader
         {
             if (_isRunning)
             {
-                throw new DotnetSpiderException("下载中心正在运行中");
+                throw new SpiderException("下载中心正在运行中");
             }
 
             Logger.LogInformation("本地下载中心启动");

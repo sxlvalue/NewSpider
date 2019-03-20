@@ -1,4 +1,5 @@
 ﻿using System;
+using DotnetSpider.Core;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
 using DotnetSpider.Sample.samples;
@@ -9,7 +10,7 @@ namespace DotnetSpider.Sample
     {
         static void Main(string[] args)
         {
-            WholeSiteSpider.Run2();
+            Startup.Run(args);
             Console.Read();
         }
     }

@@ -24,7 +24,7 @@ namespace DotnetSpider.Data
 
         public static void AddTargetRequests(this DataFlowContext context, params Request[] requests)
         {
-            if (!context.ContainsKey(RequestKey))
+            if (!context.Contains(RequestKey))
             {
                 context[ExtractedRequestsKey] = new List<Request>(requests);
             }
@@ -42,7 +42,7 @@ namespace DotnetSpider.Data
         public static ISelectable GetSelectable(this DataFlowContext context,
             ContentType contentType = ContentType.Auto, bool removeOutboundLinks = true)
         {
-            if (!context.ContainsKey(SelectableKey))
+            if (!context.Contains(SelectableKey))
             {
                 var response = GetResponse(context);
 

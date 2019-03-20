@@ -15,10 +15,8 @@ using Newtonsoft.Json;
 
 namespace DotnetSpider
 {
-    public partial class Spider : ISpider
+    public partial class Spider
     {
-        private const int DataParserComparer = 10;
-        private const int StorageComparer = 20;
         private readonly IList<Request> _requests = new List<Request>();
 
         private readonly List<IDataFlow> _dataFlows = new List<IDataFlow>();
@@ -57,6 +55,7 @@ namespace DotnetSpider
                     throw new ArgumentException("遍历深度必须大于 0");
                 }
 
+                CheckIfRunning();
                 _depth = value;
             }
         }
@@ -71,8 +70,10 @@ namespace DotnetSpider
             {
                 if (value <= 0)
                 {
-                    throw new DotnetSpiderException("下载速度必须大于 0");
+                    throw new SpiderException("下载速度必须大于 0");
                 }
+
+                CheckIfRunning();
 
                 _speed = value;
 
@@ -101,7 +102,7 @@ namespace DotnetSpider
         /// <summary>
         /// 上报状态的间隔时间，单位: 秒
         /// </summary>
-        /// <exception cref="DotnetSpiderException"></exception>
+        /// <exception cref="SpiderException"></exception>
         public int StatisticsInterval
         {
             get => _statisticsInterval;
@@ -109,9 +110,10 @@ namespace DotnetSpider
             {
                 if (value < 5)
                 {
-                    throw new DotnetSpiderException("上报状态间隔必须大于 5 (秒)");
+                    throw new SpiderException("上报状态间隔必须大于 5 (秒)");
                 }
 
+                CheckIfRunning();
                 _statisticsInterval = value;
             }
         }
@@ -124,7 +126,6 @@ namespace DotnetSpider
 
         public string Cookie { get; set; }
 
-
         public int RetryDownloadTimes
         {
             get => _retryDownloadTimes;
@@ -132,9 +133,10 @@ namespace DotnetSpider
             {
                 if (value <= 0)
                 {
-                    throw new DotnetSpiderException("下载重试次数必须大于 0");
+                    throw new SpiderException("下载重试次数必须大于 0");
                 }
 
+                CheckIfRunning();
                 _retryDownloadTimes = value;
             }
         }
@@ -146,14 +148,15 @@ namespace DotnetSpider
             {
                 if (value <= _speedControllerInterval)
                 {
-                    throw new DotnetSpiderException($"等待结束时间必需大于速度控制器间隔: {_speedControllerInterval}");
+                    throw new SpiderException($"等待结束时间必需大于速度控制器间隔: {_speedControllerInterval}");
                 }
 
                 if (value < 30)
                 {
-                    throw new DotnetSpiderException("等待结束时间必需大于 30 (秒)");
+                    throw new SpiderException("等待结束时间必需大于 30 (秒)");
                 }
 
+                CheckIfRunning();
                 _emptySleepTime = value;
             }
         }
@@ -168,10 +171,13 @@ namespace DotnetSpider
             _mq = mq;
             _loggerFactory = loggerFactory;
             _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
+
+            Console.CancelKeyPress += ConsoleCancelKeyPress;
         }
 
         public Task RunAsync()
         {
+            CheckIfRunning();
             return Task.Factory.StartNew(async () =>
             {
                 try
@@ -181,9 +187,6 @@ namespace DotnetSpider
                     await _statisticsService.StartAsync(Id);
 
                     EnqueueRequests();
-
-                    // 数据处理流程排序
-                    _dataFlows.Sort(new DataFlowComparer());
 
                     // 分配下载器: 可以通过消息队列(本地模式)或者HTTP接口(配合Portal)分配
                     var allocated = await AllotDownloaderAsync();
@@ -204,8 +207,6 @@ namespace DotnetSpider
                     _lastRequestedTime = DateTime.Now;
 
                     await WaitForExit();
-
-                    _logger.LogInformation($"任务 {Id} 退出");
                 }
                 catch (Exception e)
                 {
@@ -213,11 +214,24 @@ namespace DotnetSpider
                 }
                 finally
                 {
-                    _status = Status.Exited;
+                    foreach (var dataFlow in _dataFlows)
+                    {
+                        try
+                        {
+                            dataFlow.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"释放 {dataFlow.GetType().Name} 失败: {ex}");
+                        }
+                    }
+
                     // 添加任务退出的监控信息
                     await _statisticsService.ExitAsync(Id);
 
                     await _statisticsService.PrintStatisticsAsync(Id);
+                    _status = Status.Exited;
+                    _logger.LogInformation($"任务 {Id} 退出");
                 }
             });
         }
@@ -234,7 +248,8 @@ namespace DotnetSpider
 
         public void Exit()
         {
-            _status = Status.Exited;
+            _logger.LogInformation("退出中...");
+            _status = Status.Exiting;
             // 直接取消订阅即可: 1. 如果是本地应用, 
             _mq.Unsubscribe($"{DotnetSpiderConsts.ResponseHandlerTopic}{Id}");
         }
@@ -375,7 +390,7 @@ namespace DotnetSpider
         private async Task WaitForExit()
         {
             int waited = 0;
-            while (_status != Status.Exited)
+            while (!(_status == Status.Exited || _status == Status.Exiting))
             {
                 if ((DateTime.Now - _lastRequestedTime).Seconds > EmptySleepTime)
                 {
@@ -433,6 +448,7 @@ namespace DotnetSpider
                             _logger.LogInformation($"任务 {Id} 速度控制器暂停");
                             break;
                         }
+                        case Status.Exiting:
                         case Status.Exited:
                         {
                             @break = true;
@@ -443,6 +459,26 @@ namespace DotnetSpider
 
                 _logger.LogInformation($"任务 {Id} 速度控制器退出");
             });
+        }
+
+        /// <summary>
+        /// Check whether spider is running.
+        /// </summary>
+        private void CheckIfRunning()
+        {
+            if (_status == Status.Running)
+            {
+                throw new SpiderException("爬虫正在运行");
+            }
+        }
+
+        private void ConsoleCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            Exit();
+            while (_status != Status.Exited)
+            {
+                Thread.Sleep(500);
+            }
         }
     }
 }

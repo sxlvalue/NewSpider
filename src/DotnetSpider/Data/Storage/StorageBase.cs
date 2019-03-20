@@ -5,13 +5,18 @@ using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Data.Storage
 {
-    public abstract class StorageBase : DataFlowBase, IStorage
+    public abstract class StorageBase : DataFlowBase
     {
         public override async Task<DataFlowResult> Handle(DataFlowContext context)
         {
             try
             {
-                await Store(context);
+                var storeResult = await Store(context);
+                if (storeResult == DataFlowResult.Failed || storeResult == DataFlowResult.Terminated)
+                {
+                    return storeResult;
+                }
+
                 return DataFlowResult.Success;
             }
             catch (Exception e)
@@ -21,6 +26,6 @@ namespace DotnetSpider.Data.Storage
             }
         }
 
-        public abstract Task Store(DataFlowContext context);
+        protected abstract Task<DataFlowResult> Store(DataFlowContext context);
     }
 }
