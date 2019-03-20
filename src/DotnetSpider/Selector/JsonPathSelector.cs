@@ -4,7 +4,7 @@ using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// JsonPath selector.

@@ -17,8 +17,8 @@ namespace DotnetSpider
 {
     public partial class Spider : ISpider
     {
-        private const int ProcessComparer = 0;
-        private const int PipelineComparer = 1;
+        private const int DataParserComparer = 10;
+        private const int StorageComparer = 20;
         private readonly IList<Request> _requests = new List<Request>();
 
         private readonly List<IDataFlow> _dataFlows = new List<IDataFlow>();
@@ -265,7 +265,7 @@ namespace DotnetSpider
 
             if (responses.Count == 0)
             {
-                _logger.LogWarning($"任务 {Id} 接收到空下载内容");
+                _logger.LogWarning($"任务 {Id} 接收到空回复");
                 return;
             }
 

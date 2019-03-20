@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// 元素取值方式

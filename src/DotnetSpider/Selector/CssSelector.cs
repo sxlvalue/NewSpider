@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using HtmlAgilityPack;
 using DotnetSpider.HtmlAgilityPack.Css;
+using HtmlAgilityPack;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// CSS 选择器

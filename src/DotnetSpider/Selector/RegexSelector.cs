@@ -1,14 +1,15 @@
-﻿using HtmlAgilityPack;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using HtmlAgilityPack;
+
 #if NETSTANDARD20
 using System.Reflection;
 #endif
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// 正则查询器

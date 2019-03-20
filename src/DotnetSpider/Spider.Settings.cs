@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
-using DotnetSpider.Data.Pipeline;
-using DotnetSpider.Data.Processor;
+using DotnetSpider.Data.Parser;
+using DotnetSpider.Data.Storage;
 using DotnetSpider.Downloader;
 using Microsoft.Extensions.Logging;
 
@@ -10,20 +10,30 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        public void AddProcessor(PageProcessorBase processor)
+        public void AddDataParser(IDataParser parser)
         {
-            Check.NotNull(processor, nameof(processor));
-            processor.Order = ProcessComparer;
-            processor.Logger = _loggerFactory.CreateLogger(processor.GetType());
-            _dataFlows.Add(processor);
+            Check.NotNull(parser, nameof(parser));
+
+            if (parser.Order < DataParserComparer || parser.Order > StorageComparer)
+            {
+                parser.Order = DataParserComparer;
+            }
+
+            parser.Logger = _loggerFactory.CreateLogger(parser.GetType());
+            _dataFlows.Add(parser);
         }
 
-        public void AddPipeline(PipelineBase pipeline)
+        public void AddStorage(IStorage storage)
         {
-            Check.NotNull(pipeline, nameof(pipeline));
-            pipeline.Order = PipelineComparer;
-            pipeline.Logger = _loggerFactory.CreateLogger(pipeline.GetType());
-            _dataFlows.Add(pipeline);
+            Check.NotNull(storage, nameof(storage));
+
+            if (storage.Order < StorageComparer)
+            {
+                storage.Order = StorageComparer;
+            }
+
+            storage.Logger = _loggerFactory.CreateLogger(storage.GetType());
+            _dataFlows.Add(storage);
         }
 
         public void AddDataFlow(IDataFlow dataFlow)

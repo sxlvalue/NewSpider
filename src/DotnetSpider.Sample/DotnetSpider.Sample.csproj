@@ -9,4 +9,9 @@
       <ProjectReference Include="..\DotnetSpider\DotnetSpider.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="samples" />
+    </ItemGroup>
+
+ 
 </Project>

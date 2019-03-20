@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// Xpath 查询器

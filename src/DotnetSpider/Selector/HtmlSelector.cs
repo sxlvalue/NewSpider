@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HtmlAgilityPack;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	/// <summary>
 	/// HTML文件查询的抽象

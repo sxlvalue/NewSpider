@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using HtmlAgilityPack;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
     /// <summary>
     /// 查询接口

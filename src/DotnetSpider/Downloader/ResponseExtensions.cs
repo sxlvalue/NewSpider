@@ -1,6 +1,6 @@
 using System;
 using DotnetSpider.Core;
-using DotnetSpider.Extraction;
+using DotnetSpider.Selector;
 using Newtonsoft.Json;
 
 namespace DotnetSpider.Downloader

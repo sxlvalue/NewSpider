@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	public class EnviromentFields
 	{

@@ -1,7 +1,5 @@
 ﻿using System;
 using DotnetSpider.Data;
-using DotnetSpider.Data.Pipeline;
-using DotnetSpider.Data.Processor;
 using DotnetSpider.Downloader;
 using DotnetSpider.Sample.samples;
 
@@ -11,7 +9,7 @@ namespace DotnetSpider.Sample
     {
         static void Main(string[] args)
         {
-            CrawlerWholeSiteSpider.Run();
+            WholeSiteSpider.Run2();
             Console.Read();
         }
     }

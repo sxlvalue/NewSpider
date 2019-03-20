@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using DotnetSpider.Core;
 using DotnetSpider.Downloader;
-using DotnetSpider.Extraction;
+using DotnetSpider.Selector;
 
 namespace DotnetSpider.Data
 {
@@ -9,6 +9,7 @@ namespace DotnetSpider.Data
     {
         private const string RequestKey = "DotnetSpider-Request";
         private const string ResponseKey = "DotnetSpider-Response";
+        private const string SelectableKey = "DotnetSpider-Selectable";
         private const string ExtractedRequestsKey = "DotnetSpider-ExtractedRequests";
 
         public static void AddResponse(this DataFlowContext context, Response response)
@@ -38,12 +39,17 @@ namespace DotnetSpider.Data
             return context[ExtractedRequestsKey];
         }
 
-        public static ISelectable CreateSelectable(this DataFlowContext context,
+        public static ISelectable GetSelectable(this DataFlowContext context,
             ContentType contentType = ContentType.Auto, bool removeOutboundLinks = true)
         {
-            var response = GetResponse(context);
+            if (!context.ContainsKey(SelectableKey))
+            {
+                var response = GetResponse(context);
 
-            return response?.ToSelectable(contentType, removeOutboundLinks);
+                context[SelectableKey] = response?.ToSelectable(contentType, removeOutboundLinks);
+            }
+
+            return context[SelectableKey];
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DotnetSpider.Extraction
+namespace DotnetSpider.Selector
 {
 	public class ExtractionException : Exception
 	{

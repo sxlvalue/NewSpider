@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace DotnetSpider.Data
 {
@@ -6,7 +7,7 @@ namespace DotnetSpider.Data
     {
         private readonly Dictionary<string, dynamic> _properties = new Dictionary<string, dynamic>();
 
-        public readonly Dictionary<string, List<dynamic>> DataItems = new Dictionary<string, List<dynamic>>();
+        private readonly Dictionary<string, dynamic> _items = new Dictionary<string, dynamic>();
 
         public string Result { get; set; }
 
@@ -44,28 +45,24 @@ namespace DotnetSpider.Data
             }
         }
 
-        public void AddDataItems(Dictionary<string, List<dynamic>> items)
+        public void AddItem(string name, dynamic value)
         {
-            
-            if (items == null)
-            {
-                return;
-            }
-
             lock (this)
             {
-                foreach (var item in items)
+                if (!_items.ContainsKey(name))
                 {
-                    if (!DataItems.ContainsKey(item.Key))
-                    {
-                        DataItems.Add(item.Key, item.Value);
-                    }
-                    else
-                    {
-                        DataItems[item.Key].AddRange(item.Value);
-                    }
+                    _items.Add(name, value);
+                }
+                else
+                {
+                    _items[name] = value;
                 }
             }
+        }
+
+        public IDictionary<string, dynamic> GetItems()
+        {
+            return _items.ToImmutableDictionary();
         }
     }
 }

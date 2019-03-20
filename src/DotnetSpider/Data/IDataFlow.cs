@@ -8,7 +8,7 @@ namespace DotnetSpider.Data
         int Order { get; set; }
         
         ILogger Logger { get; set; }
-        
+
         Task<DataFlowResult> Handle(DataFlowContext context);
     }
 }
