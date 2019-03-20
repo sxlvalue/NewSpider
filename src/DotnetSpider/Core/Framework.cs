@@ -1,18 +1,45 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 
 namespace DotnetSpider.Core
 {
     public static class Framework
     {
+        public const string ResponseHandlerTopic = "ResponseHandler-";
+        public const string DownloaderCenterTopic = "DownloadCenter";
+        public const string StatisticsServiceTopic = "StatisticsService";
+
+        public const string AllocateDownloaderCommand = "Allocate";
+        public const string DownloadCommand = "Download";
+        public const string RegisterCommand = "Register";
+        public const string HeartbeatCommand = "Heartbeat";
+        public const string ExitCommand = "Exit";
+        public const string CommandSeparator = "|";
+        
+        public static void SetEncoding()
+        {
+#if NETSTANDARD
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
+        }
+
+        public static void SetMultiThread()
+        {
+            ThreadPool.SetMinThreads(256, 256);
+#if !NETSTANDARD
+			ServicePointManager.DefaultConnectionLimit = 1000;
+#endif
+        }
+        
         /// <summary>
         /// 打印爬虫框架信息
         /// </summary>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public static void PrintInfo()
         {
-            var key = "PRINT_DOTNETSPIDER_INFO";
+            var key = "PRINT_DOTNET_SPIDER_INFO";
 
             var isPrinted = AppDomain.CurrentDomain.GetData(key) != null;
 

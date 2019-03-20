@@ -1,5 +1,3 @@
-using DotnetSpider.Core;
-
 namespace DotnetSpider.Downloader
 {
     public class Response

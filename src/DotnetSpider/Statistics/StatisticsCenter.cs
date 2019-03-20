@@ -1,12 +1,8 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DotnetSpider.Core;
-using DotnetSpider.Downloader;
-using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace DotnetSpider.Statistics
 {
@@ -35,7 +31,7 @@ namespace DotnetSpider.Statistics
 
             _logger.LogInformation("统计中心启动");
 
-            _mq.Subscribe(DotnetSpiderConsts.StatisticsServiceTopic, async (message) =>
+            _mq.Subscribe(Framework.StatisticsServiceTopic, async (message) =>
             {
                 var commandMessage = message.ToCommandMessage();
                 if (commandMessage == null)
@@ -105,7 +101,7 @@ namespace DotnetSpider.Statistics
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _mq.Unsubscribe(DotnetSpiderConsts.StatisticsServiceTopic);
+            _mq.Unsubscribe(Framework.StatisticsServiceTopic);
             _isRunning = false;
             _logger.LogInformation("统计中心退出");
             return Task.CompletedTask;

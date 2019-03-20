@@ -53,7 +53,7 @@ namespace DotnetSpider.Downloader
                 Id = _agentId,
                 Name = _name
             });
-            await _mq.PublishAsync(DotnetSpiderConsts.DownloaderCenterTopic, $"{DotnetSpiderConsts.RegisterCommand}|{json}");
+            await _mq.PublishAsync(Framework.DownloaderCenterTopic, $"{Framework.RegisterCommand}|{json}");
 
             // 开始心跳
             HeartbeatAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
@@ -79,17 +79,17 @@ namespace DotnetSpider.Downloader
 
                     switch (commandMessage.Command)
                     {
-                        case DotnetSpiderConsts.AllocateDownloaderCommand:
+                        case Framework.AllocateDownloaderCommand:
                         {
                             await AllotDownloaderAsync(commandMessage.Message);
                             break;
                         }
-                        case DotnetSpiderConsts.DownloadCommand:
+                        case Framework.DownloadCommand:
                         {
                             await DownloadAsync(commandMessage.Message).ConfigureAwait(false);
                             break;
                         }
-                        case DotnetSpiderConsts.ExitCommand:
+                        case Framework.ExitCommand:
                         {
                             await StopAsync(default);
                             break;
@@ -177,8 +177,8 @@ namespace DotnetSpider.Downloader
                         Id = _agentId,
                         Name = _name
                     });
-                    await _mq.PublishAsync(DotnetSpiderConsts.DownloaderCenterTopic,
-                        $"{DotnetSpiderConsts.HeartbeatCommand}|{json}");
+                    await _mq.PublishAsync(Framework.DownloaderCenterTopic,
+                        $"{Framework.HeartbeatCommand}|{json}");
                 }
             }, cancellationToken);
         }
@@ -207,7 +207,7 @@ namespace DotnetSpider.Downloader
                                     {
                                     }
 
-                                    await _mq.PublishAsync($"{DotnetSpiderConsts.ResponseHandlerTopic}{grouping.Key}",
+                                    await _mq.PublishAsync($"{Framework.ResponseHandlerTopic}{grouping.Key}",
                                         JsonConvert.SerializeObject(new[] {response}));
                                 }
                             }).ConfigureAwait(false);

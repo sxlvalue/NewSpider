@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Principal;
-using System.Text;
-using CommandLine;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DotnetSpider.Core
 {
@@ -15,7 +13,7 @@ namespace DotnetSpider.Core
     /// </summary>
     public static class Startup
     {
-        public static readonly Dictionary<string, string> _switchMappings =
+        private static readonly Dictionary<string, string> SwitchMappings =
             new Dictionary<string, string>
             {
                 {"-s", "spider"},
@@ -36,104 +34,86 @@ namespace DotnetSpider.Core
         /// <param name="args">运行参数</param>
         public static void Run(params string[] args)
         {
-            args = new[] {"-s", "atest"};
+            Framework.SetEncoding();
+
             var configurationBuilder = new ConfigurationBuilder();
-            configurationBuilder.AddCommandLine(args, _switchMappings);
+            configurationBuilder.AddCommandLine(args, SwitchMappings);
             configurationBuilder.AddEnvironmentVariables();
 
             var configuration = configurationBuilder.Build();
-            var spider = configuration["spider"];
-            var name = configuration["name"];
-            var id = configuration["id"];
-            var config = configuration["config"];
-            var arguments = configuration["args"];
+            string spider = configuration["spider"];
+            if (string.IsNullOrWhiteSpace(spider))
+            {
+                throw new SpiderException("未指定需要执行的爬虫");
+            }
 
-//            PrintEnvironment(args);
-//
-//            var builder = new LocalSpiderBuilder();
-//            builder.UseSerilog(); // 可以配置任意日志组件
-//            builder.UseDistinctScheduler(); // 配置本地内存调度或者数据库调度
-//            builder.UseConfiguration(options.Config);
-//
-//
-//            var spiderName = options.Spider;
-//
-//            var spiderTypes = DetectSpiders();
-//
-//            if (spiderTypes == null || spiderTypes.Count == 0)
-//            {
-//                return;
-//            }
-//
-//            var spider = CreateSpiderInstance(spiderName, options, spiderTypes);
-//            if (spider != null)
-//            {
-//                Framework.PrintLine();
-//
-//                var runMethod = spiderTypes[spiderName].GetMethod("Run");
-//
-//                if (runMethod != null) runMethod.Invoke(spider, new object[] {options.GetArguments()});
-//            }
+            string name = configuration["name"];
+            string id = configuration["id"] ?? Guid.NewGuid().ToString("N");
+            string config = configuration["config"];
+            var arguments = configuration["args"]?.Split(' ');
+
+            PrintEnvironment(args);
+
+            // TODO: 根据配置文件启用不同的 Builder
+            var builder = new LocalSpiderBuilder();
+            builder.UseSerilog(); // 可以配置任意日志组件
+            builder.UseConfiguration(config);
+
+            var spiderTypes = DetectSpiders();
+
+            if (spiderTypes == null || spiderTypes.Count == 0)
+            {
+                return;
+            }
+
+            var spiderType = spiderTypes.FirstOrDefault(x => x.Name.ToLower() == spider.ToLower());
+            if (spiderType == null)
+            {
+                ConsoleHelper.WriteLine($"未找到爬虫: {spider}", 0, ConsoleColor.DarkYellow);
+                return;
+            }
+
+            builder.Services.AddTransient(spiderType);
+            var instance = builder.Build(spiderType);
+            if (instance != null)
+            {
+                instance.Name = name;
+                instance.Id = id;
+                instance.RunAsync(arguments);
+            }
+            else
+            {
+                ConsoleHelper.WriteLine("创建爬虫对象失败", 0, ConsoleColor.DarkYellow);
+            }
         }
 
         /// <summary>
         /// 检测爬虫类型
         /// </summary>
         /// <returns></returns>
-        public static Dictionary<string, Type> DetectSpiders()
+        private static HashSet<Type> DetectSpiders()
         {
-            var spiderTypes = new Dictionary<string, Type>();
+            var spiderTypes = new HashSet<Type>();
 
-//            var spiderType = typeof(Spider);
-//            foreach (var file in DetectAssemblies())
-//            {
-//                var asm = Assembly.Load(file);
-//                var types = asm.GetTypes();
-//
-//                Console.WriteLine($"Fetch assembly   : {asm.GetName(false)}.");
-//
-//                foreach (var type in types)
-//                {
-//                    if (hasNonParametersConstructor)
-//                    {
-//                        if (isNamed && isRunnable && isIdentity)
-//                        {
-//                            if (!spiderTypes.ContainsKey(fullName))
-//                            {
-//                                spiderTypes.Add(fullName, type);
-//                            }
-//                            else
-//                            {
-//                                ConsoleHelper.WriteLine($"Spider {type.Name} are duplicate.", 1);
-//                                return null;
-//                            }
-//
-//                            var startupName =
-//                                type.GetCustomAttributes(typeof(TaskName), true).FirstOrDefault() as TaskName;
-//                            if (startupName != null)
-//                            {
-//                                if (!spiderTypes.ContainsKey(startupName.Name))
-//                                {
-//                                    spiderTypes.Add(startupName.Name, type);
-//                                }
-//                                else
-//                                {
-//                                    ConsoleHelper.WriteLine($"Spider {type.Name} are duplicate.", 1);
-//                                    return null;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            if (spiderTypes.Count == 0)
-//            {
-//                ConsoleHelper.WriteLine("Did not detect any spider.", 1, ConsoleColor.DarkYellow);
-//                return null;
-//            }
-//
-//            Console.WriteLine($"Count of crawlers: {spiderTypes.Keys.Count}");
+            var spiderType = typeof(Spider);
+            var asmNames = new List<string>();
+            foreach (var file in DetectAssemblies())
+            {
+                var asm = Assembly.Load(file);
+                var types = asm.GetTypes();
+                asmNames.Add(asm.GetName(false).Name);
+
+                foreach (var type in types)
+                {
+                    if (spiderType.IsAssignableFrom(type))
+                    {
+                        spiderTypes.Add(type);
+                    }
+                }
+            }
+
+            ConsoleHelper.WriteLine($"程序集     : {string.Join(", ", asmNames)}", 0, ConsoleColor.DarkYellow);
+            ConsoleHelper.WriteLine($"检测到爬虫 : {spiderTypes.Count} 个", 0, ConsoleColor.DarkYellow);
 
             return spiderTypes;
         }
@@ -142,7 +122,7 @@ namespace DotnetSpider.Core
         /// 扫描所有需要求的DLL
         /// </summary>
         /// <returns></returns>
-        public static List<string> DetectAssemblies()
+        private static List<string> DetectAssemblies()
         {
             var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory);
             var files = Directory.GetFiles(path)
@@ -153,80 +133,16 @@ namespace DotnetSpider.Core
                                  && DetectNames.Any(n => f.ToLower().Contains(n))).ToList();
         }
 
-//        /// <summary>
-//        /// 反射爬虫对象
-//        /// </summary>
-//        /// <param name="spiderName">名称</param>
-//        /// <param name="options">运行参数</param>
-//        /// <param name="spiderTypes">所有的爬虫类型</param>
-//        /// <returns>爬虫对象</returns>
-//        public static object CreateSpiderInstance(string spiderName,  
-//            Dictionary<string, Type> spiderTypes)
-//        {
-//            if (!spiderTypes.ContainsKey(spiderName))
-//            {
-//                ConsoleHelper.WriteLine($"Spider: {spiderName} unfounded", ConsoleColor.DarkYellow);
-//                return null;
-//            }
-//
-//            var spiderType = spiderTypes[spiderName];
-//
-//            var spider = Activator.CreateInstance(spiderType);
-//            var spiderProperties = spiderType.GetProperties();
-//
-//            if (!string.IsNullOrWhiteSpace(options.Identity))
-//            {
-//                var identity = "guid" == options.Identity.ToLower()
-//                    ? Guid.NewGuid().ToString("N")
-//                    : options.Identity.Trim();
-//                if (!string.IsNullOrWhiteSpace(identity))
-//                {
-//                    var property = spiderProperties.First(p => p.Name == "Identity");
-//                    property.SetValue(spider, identity, new object[0]);
-//                }
-//            }
-//
-//            if (!string.IsNullOrWhiteSpace(options.TaskId))
-//            {
-//                var property = spiderProperties.FirstOrDefault(p => p.Name == "TaskId");
-//                if (property != null)
-//                {
-//                    var taskId = "guid" == options.TaskId.ToLower()
-//                        ? Guid.NewGuid().ToString("N")
-//                        : options.TaskId.Trim();
-//                    if (!string.IsNullOrWhiteSpace(taskId))
-//                    {
-//                        property.SetValue(spider, taskId, new object[0]);
-//                    }
-//                }
-//            }
-//
-//            if (!string.IsNullOrWhiteSpace(options.Name))
-//            {
-//                var property = spiderProperties.First(p => p.Name == "Name");
-//                property.SetValue(spider, options.Name.Trim(), new object[0]);
-//            }
-//
-//            return spider;
-//        }
-
         private static void PrintEnvironment(params string[] args)
         {
-            Console.WriteLine("");
             Framework.PrintInfo();
             var commands = string.Join(" ", args);
-            Framework.PrintLine();
-            Console.WriteLine($"Args             : {commands}");
-            Console.WriteLine($"BaseDirectory    : {AppDomain.CurrentDomain.BaseDirectory}");
-            Console.WriteLine(
-                $"System           : {Environment.OSVersion} {(Environment.Is64BitOperatingSystem ? "X64" : "X86")}");
-        }
-
-        private static void SetEncoding()
-        {
-#if NETSTANDARD
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-#endif
+            ConsoleHelper.WriteLine($"运行参数   : {commands}", 0, ConsoleColor.DarkYellow);
+            ConsoleHelper.WriteLine($"运行目录   : {AppDomain.CurrentDomain.BaseDirectory}", 0,
+                ConsoleColor.DarkYellow);
+            ConsoleHelper.WriteLine(
+                $"操作系统   : {Environment.OSVersion} {(Environment.Is64BitOperatingSystem ? "X64" : "X86")}", 0,
+                ConsoleColor.DarkYellow);
         }
     }
 }

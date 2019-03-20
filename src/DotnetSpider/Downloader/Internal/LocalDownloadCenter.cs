@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using DotnetSpider.Core;
 using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
-using DotnetSpider.Statistics;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -44,7 +43,7 @@ namespace DotnetSpider.Downloader.Internal
             Logger.LogInformation("下载器代理分配成功");
             // 发送消息让下载代理器分配好下载器
             var message =
-                $"{DotnetSpiderConsts.AllocateDownloaderCommand}|{JsonConvert.SerializeObject(allotDownloaderMessage)}";
+                $"{Framework.AllocateDownloaderCommand}|{JsonConvert.SerializeObject(allotDownloaderMessage)}";
             foreach (var agent in agents)
             {
                 await Mq.PublishAsync(agent.Id, message);
@@ -64,7 +63,7 @@ namespace DotnetSpider.Downloader.Internal
 
             var agent = agents[0];
             var json = JsonConvert.SerializeObject(requests);
-            await Mq.PublishAsync(agent.Id, $"{DotnetSpiderConsts.DownloadCommand}|{json}");
+            await Mq.PublishAsync(agent.Id, $"{Framework.DownloadCommand}|{json}");
         }
     }
 }

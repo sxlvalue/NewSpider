@@ -12,7 +12,7 @@ namespace DotnetSpider.MessageQueue
                 return null;
             }
 
-            var commandEndAt = message.IndexOf(DotnetSpiderConsts.CommandSeparator, StringComparison.Ordinal);
+            var commandEndAt = message.IndexOf(Framework.CommandSeparator, StringComparison.Ordinal);
             return commandEndAt > 0
                 ? new CommandMessage
                 {

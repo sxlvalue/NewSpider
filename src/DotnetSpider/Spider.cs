@@ -22,12 +22,11 @@ namespace DotnetSpider
         private readonly List<IDataFlow> _dataFlows = new List<IDataFlow>();
         private readonly IMessageQueue _mq;
         private readonly ILogger _logger;
-        private readonly IScheduler _scheduler;
         private readonly IDownloadService _downloadService;
         private readonly IStatisticsService _statisticsService;
         private readonly ILoggerFactory _loggerFactory;
         private DateTime _lastRequestedTime;
-
+        private IScheduler _scheduler;
         private Status _status;
         private int _emptySleepTime = 30;
         private int _retryDownloadTimes = 5;
@@ -40,6 +39,10 @@ namespace DotnetSpider
         public event Action<Request> OnDownloading;
 
         public DownloaderType DownloaderType { get; set; } = DownloaderType.Default;
+
+        protected virtual void Initialize()
+        {
+        }
 
         /// <summary>
         /// 遍历深度
@@ -57,6 +60,16 @@ namespace DotnetSpider
 
                 CheckIfRunning();
                 _depth = value;
+            }
+        }
+
+        public IScheduler Scheduler
+        {
+            get => _scheduler;
+            set
+            {
+                CheckIfRunning();
+                _scheduler = value;
             }
         }
 
@@ -162,11 +175,10 @@ namespace DotnetSpider
         }
 
         public Spider(IMessageQueue mq,
-            IDownloadService downloadService, IStatisticsService statisticsService, IScheduler scheduler,
+            IDownloadService downloadService, IStatisticsService statisticsService,
             ILoggerFactory loggerFactory)
         {
             _downloadService = downloadService;
-            _scheduler = scheduler;
             _statisticsService = statisticsService;
             _mq = mq;
             _loggerFactory = loggerFactory;
@@ -175,9 +187,11 @@ namespace DotnetSpider
             Console.CancelKeyPress += ConsoleCancelKeyPress;
         }
 
-        public Task RunAsync()
+        public Task RunAsync(params string[] args)
         {
             CheckIfRunning();
+            Initialize();
+            _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
             return Task.Factory.StartNew(async () =>
             {
                 try
@@ -201,7 +215,7 @@ namespace DotnetSpider
                     StartSpeedControllerAsync().ConfigureAwait(false).GetAwaiter();
 
                     // 订阅数据流
-                    _mq.Subscribe($"{DotnetSpiderConsts.ResponseHandlerTopic}{Id}",
+                    _mq.Subscribe($"{Framework.ResponseHandlerTopic}{Id}",
                         async message => await HandleMessage(message));
 
                     _lastRequestedTime = DateTime.Now;
@@ -251,7 +265,7 @@ namespace DotnetSpider
             _logger.LogInformation("退出中...");
             _status = Status.Exiting;
             // 直接取消订阅即可: 1. 如果是本地应用, 
-            _mq.Unsubscribe($"{DotnetSpiderConsts.ResponseHandlerTopic}{Id}");
+            _mq.Unsubscribe($"{Framework.ResponseHandlerTopic}{Id}");
         }
 
         private async Task<bool> AllotDownloaderAsync()

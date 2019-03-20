@@ -1,7 +1,6 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DotnetSpider.Core;
 using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Downloader

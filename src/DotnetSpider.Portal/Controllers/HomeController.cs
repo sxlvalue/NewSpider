@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using DotnetSpider.Portal.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace DotnetSpider.Portal.Controllers
 {

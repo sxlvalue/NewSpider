@@ -10,7 +10,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="samples" />
+      <Content Include="appsettings.json">
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
  

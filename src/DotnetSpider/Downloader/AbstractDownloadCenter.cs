@@ -6,7 +6,6 @@ using DotnetSpider.Core;
 using DotnetSpider.Downloader.Entity;
 using DotnetSpider.Downloader.Internal;
 using DotnetSpider.MessageQueue;
-using DotnetSpider.Statistics;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -47,7 +46,7 @@ namespace DotnetSpider.Downloader
 
             Logger.LogInformation("本地下载中心启动");
 
-            Mq.Subscribe(DotnetSpiderConsts.DownloaderCenterTopic, async (message) =>
+            Mq.Subscribe(Framework.DownloaderCenterTopic, async (message) =>
             {
                 var commandMessage = message.ToCommandMessage();
                 if (commandMessage == null)
@@ -95,7 +94,7 @@ namespace DotnetSpider.Downloader
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            Mq.Unsubscribe(DotnetSpiderConsts.DownloaderCenterTopic);
+            Mq.Unsubscribe(Framework.DownloaderCenterTopic);
             _isRunning = false;
             Logger.LogInformation("本地下载中心退出");
             return Task.CompletedTask;

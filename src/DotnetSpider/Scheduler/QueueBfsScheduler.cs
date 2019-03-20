@@ -1,10 +1,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
-using DotnetSpider.Scheduler.Component;
 
 namespace DotnetSpider.Scheduler
 {

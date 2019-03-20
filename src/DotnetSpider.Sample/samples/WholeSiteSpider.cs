@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
@@ -15,7 +14,6 @@ namespace DotnetSpider.Sample.samples
         {
             var builder = new LocalSpiderBuilder();
             builder.UseSerilog(); // 可以配置任意日志组件
-            builder.UseDistinctScheduler(); // 配置本地内存调度或者数据库调度
 
             var spider = builder.Build(); // 生成爬虫对象
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
@@ -37,7 +35,6 @@ namespace DotnetSpider.Sample.samples
         {
             var builder = new LocalSpiderBuilder();
             builder.UseSerilog(); // 可以配置任意日志组件
-            builder.UseDistinctScheduler(); // 配置本地内存调度或者数据库调度
 
             var spider = builder.Build(); // 生成爬虫对象
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识

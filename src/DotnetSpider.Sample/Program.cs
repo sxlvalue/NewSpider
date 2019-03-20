@@ -1,8 +1,5 @@
 ﻿using System;
 using DotnetSpider.Core;
-using DotnetSpider.Data;
-using DotnetSpider.Downloader;
-using DotnetSpider.Sample.samples;
 
 namespace DotnetSpider.Sample
 {
@@ -10,7 +7,7 @@ namespace DotnetSpider.Sample
     {
         static void Main(string[] args)
         {
-            Startup.Run(args);
+            Startup.Run(new[] {"-s", "CnblogsSpider", "-n", "博客园全站采集"});
             Console.Read();
         }
     }
