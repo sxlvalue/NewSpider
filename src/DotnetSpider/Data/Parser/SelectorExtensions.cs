@@ -23,10 +23,6 @@ namespace DotnetSpider.Data.Parser
                         NotNullExpression(selector);
                         return Selectors.Css(expression);
                     }
-                    case SelectorType.Enviroment:
-                    {
-                        return Selectors.Environment(expression);
-                    }
                     case SelectorType.JsonPath:
                     {
                         NotNullExpression(selector);

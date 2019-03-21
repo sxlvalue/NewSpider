@@ -1,10 +1,11 @@
-using System;
 using System.Collections.Generic;
 
 namespace DotnetSpider.Data.Storage.Model
 {
     public class TableMetadata
     {
+        public string TypeName { get; set; }
+        
         public Schema Schema { get; set; }
 
         public HashSet<string> Primary { get; set; }

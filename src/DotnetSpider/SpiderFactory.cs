@@ -1,13 +1,7 @@
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
-using DotnetSpider.Downloader;
-using DotnetSpider.Statistics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider
 {

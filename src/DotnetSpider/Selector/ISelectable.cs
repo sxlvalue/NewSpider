@@ -25,7 +25,9 @@ namespace DotnetSpider.Selector
 		/// <summary>
 		/// For html content
 		/// </summary>
-		InnerText
+		InnerText,
+		
+		Count
 	}
 
 	/// <summary>

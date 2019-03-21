@@ -1,6 +1,3 @@
-using System;
-using System.Reflection;
-using System.Runtime.Serialization;
 using DotnetSpider.Selector;
 
 namespace DotnetSpider.Data.Parser.Attribute
@@ -10,7 +7,7 @@ namespace DotnetSpider.Data.Parser.Attribute
     /// </summary>
     public class ValueSelector : Selector
     {
-        internal PropertyInfo Property { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// 构造方法

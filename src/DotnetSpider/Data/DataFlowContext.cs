@@ -7,12 +7,12 @@ namespace DotnetSpider.Data
 {
     public class DataFlowContext
     {
-        private readonly ConcurrentDictionary<string, dynamic> _properties = new ConcurrentDictionary<string, dynamic>();
+        private readonly Dictionary<string, dynamic> _properties = new Dictionary<string, dynamic>();
 
-        private readonly ConcurrentDictionary<string, dynamic> _items = new ConcurrentDictionary<string, dynamic>();
+        private readonly Dictionary<string, dynamic> _items = new Dictionary<string, dynamic>();
 
         public SpiderOptions Options { get; set; }
-        
+
         public string Result { get; set; }
 
         public dynamic this[string key]
@@ -27,7 +27,7 @@ namespace DotnetSpider.Data
 
                 else
                 {
-                    _properties.TryAdd(key, value);
+                    _properties.Add(key, value);
                 }
             }
         }
@@ -35,6 +35,11 @@ namespace DotnetSpider.Data
         public bool Contains(string key)
         {
             return _properties.ContainsKey(key);
+        }
+
+        public void Add(string key, dynamic value)
+        {
+            _properties.Add(key, value);
         }
 
         public void AddItem(string name, dynamic value)
@@ -46,8 +51,13 @@ namespace DotnetSpider.Data
 
             else
             {
-                _items.TryAdd(name, value);
+                _items.Add(name, value);
             }
+        }
+
+        public dynamic GetItem(string name)
+        {
+            return _items.ContainsKey(name) ? _items[name] : null;
         }
 
         public IDictionary<string, dynamic> GetItems()

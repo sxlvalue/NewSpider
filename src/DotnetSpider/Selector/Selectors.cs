@@ -103,22 +103,6 @@ namespace DotnetSpider.Selector
 		}
 
 		/// <summary>
-		/// 创建环境变量值查询器
-		/// </summary>
-		/// <param name="expr">键值</param>
-		/// <returns>查询器</returns>
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		public static ISelector Environment(string expr)
-		{
-			var key = $"e_{expr}";
-			if (!Cache.ContainsKey(key))
-			{
-				Cache.Add(key, new EnvironmentSelector(expr));
-			}
-			return Cache[key];
-		}
-
-		/// <summary>
 		/// 创建JsonPath查询器
 		/// </summary>
 		/// <param name="expr">JsonPath表达式</param>

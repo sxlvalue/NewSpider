@@ -15,9 +15,9 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		/// <param name="value">下载的链接</param>
 		/// <returns>下载完成后的文件名</returns>
-		protected override object FormatValue(object value)
+		protected override string FormatValue(string value)
 		{
-			var filePath = value.ToString();
+			var filePath = value;
 			var name = Path.GetFileName(filePath);
 			string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "images", name);
 			_client.DownloadFile(file, filePath);

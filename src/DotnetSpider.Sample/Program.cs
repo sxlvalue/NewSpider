@@ -1,9 +1,6 @@
 ﻿using System;
-using DotnetSpider.Core;
 using DotnetSpider.Data;
-using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Sample.samples;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DotnetSpider.Sample
 {

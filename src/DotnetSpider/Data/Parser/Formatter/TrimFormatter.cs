@@ -38,25 +38,25 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		/// <param name="value">数值</param>
 		/// <returns>被格式化后的数值</returns>
-		protected override object FormatValue(object value)
+		protected override string FormatValue(string value)
 		{
 			switch (Type)
 			{
 				case TrimType.All:
 					{
-						return value.ToString().Trim();
+						return value.Trim();
 					}
 				case TrimType.Left:
 					{
-						return value.ToString().TrimStart();
+						return value.TrimStart();
 					}
 				case TrimType.Right:
 					{
-						return value.ToString().TrimEnd();
+						return value.TrimEnd();
 					}
 				default:
 					{
-						return value.ToString().Trim();
+						return value.Trim();
 					}
 			}
 		}

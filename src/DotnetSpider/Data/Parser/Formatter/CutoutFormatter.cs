@@ -33,9 +33,9 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		/// <param name="value">数值</param>
 		/// <returns>被格式化后的数值</returns>
-		protected override object FormatValue(object value)
+		protected override string FormatValue(string value)
 		{
-			var tmp = value.ToString();
+			var tmp = value;
 			int begin = tmp.IndexOf(StartPart, StringComparison.Ordinal);
 			int length;
 			if (!string.IsNullOrEmpty(EndPart))

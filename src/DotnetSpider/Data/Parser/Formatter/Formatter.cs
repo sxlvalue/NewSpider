@@ -24,14 +24,14 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// <summary>
 		/// 如果被格式化的值为空的返回值
 		/// </summary>
-		public object ValueWhenNull { get; set; }
+		public string ValueWhenNull { get; set; }
 
 		/// <summary>
 		/// 实现数值的转化
 		/// </summary>
 		/// <param name="value">数值</param>
 		/// <returns>被格式化后的数值</returns>
-		protected abstract object FormatValue(object value);
+		protected abstract string FormatValue(string value);
 
 		/// <summary>
 		/// 校验参数是否设置正确
@@ -43,7 +43,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		/// <param name="value">数值</param>
 		/// <returns>被格式化后的数值</returns>
-		public object Format(object value)
+		public string Format(string value)
 		{
 			CheckArguments();
 

@@ -23,7 +23,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		/// <param name="value">数值</param>
 		/// <returns>被格式化后的数值</returns>
-		protected override object FormatValue(object value)
+		protected override string FormatValue(string value)
 		{
 			return value.Equals(EqualValue) ? Displacement : value;
 		}

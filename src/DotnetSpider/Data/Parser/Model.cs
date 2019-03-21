@@ -1,20 +1,19 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using DotnetSpider.Data.Parser.Attribute;
 using DotnetSpider.Data.Storage.Model;
-using DotnetSpider.Selector;
-using Newtonsoft.Json;
 
 namespace DotnetSpider.Data.Parser
 {
     public class Model<T> where T : EntityBase<T>, new()
     {
+        public string TypeName { get; }
+        
         /// <summary>
         /// 数据模型的选择器
         /// </summary>
-        public Attribute.Selector Selector { get; protected set; }
+        public Attribute.Selector Selector { get; }
 
         /// <summary>
         /// 从最终解析到的结果中取前 Take 个实体
@@ -44,6 +43,7 @@ namespace DotnetSpider.Data.Parser
         public Model()
         {
             var type = typeof(T);
+            TypeName = type.FullName;
             var entitySelector =
                 type.GetCustomAttributes(typeof(EntitySelector), true).FirstOrDefault() as EntitySelector;
             int take = 0;
@@ -56,39 +56,36 @@ namespace DotnetSpider.Data.Parser
                 selector = new Attribute.Selector {Expression = entitySelector.Expression, Type = entitySelector.Type};
             }
 
-            var targets = type.GetCustomAttributes(typeof(FollowSelector), true).Select(s => (FollowSelector) s)
+            var followSelectors = type.GetCustomAttributes(typeof(FollowSelector), true).Select(x => (FollowSelector) x)
                 .ToList();
-            var sharedValueSelectors = type.GetCustomAttributes(typeof(ValueSelector), true).Select(e =>
-            {
-                var p = (ValueSelector) e;
-                return new ValueSelector
-                {
-                    Expression = p.Expression,
-                    Type = p.Type
-                };
-            }).ToList();
+            var sharedValueSelectors = type.GetCustomAttributes(typeof(ValueSelector), true)
+                .Select(x => (ValueSelector) x).ToList();
 
             var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-            var fields = new HashSet<ValueSelector>();
+            var valueSelectors = new HashSet<ValueSelector>();
             foreach (var property in properties)
             {
-                var field = property.GetCustomAttributes(typeof(ValueSelector), true).FirstOrDefault() as ValueSelector;
+                var valueSelector = property.GetCustomAttributes(typeof(ValueSelector), true).FirstOrDefault() as ValueSelector;
 
-                if (field == null)
+                if (valueSelector == null)
                 {
                     continue;
                 }
 
-                field.Property = property;
-                field.Formatters = property.GetCustomAttributes(typeof(Formatter.Formatter), true)
+                if (string.IsNullOrWhiteSpace(valueSelector.Name))
+                {
+                    valueSelector.Name = property.Name;
+                }
+
+                valueSelector.Formatters = property.GetCustomAttributes(typeof(Formatter.Formatter), true)
                     .Select(p => (Formatter.Formatter) p).ToArray();
-                fields.Add(field);
+                valueSelectors.Add(valueSelector);
             }
 
             Selector = selector;
-            ValueSelectors = fields;
-            FollowSelectors = new HashSet<FollowSelector>(targets);
+            ValueSelectors = valueSelectors;
+            FollowSelectors = new HashSet<FollowSelector>(followSelectors);
             ShareValueSelectors = new HashSet<ValueSelector>(sharedValueSelectors);
             Take = take;
             TakeFromHead = takeFromHead;
