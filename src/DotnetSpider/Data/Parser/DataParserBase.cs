@@ -18,7 +18,7 @@ namespace DotnetSpider.Data.Parser
 
         public Func<DataFlowContext, ISelectable> Selectable { get; set; }
 
-        public override async Task<DataFlowResult> Handle(DataFlowContext context)
+        public override async Task<DataFlowResult> HandleAsync(DataFlowContext context)
         {
             try
             {
@@ -70,6 +70,7 @@ namespace DotnetSpider.Data.Parser
             request.AgentId = source.AgentId;
             request.RetriedTimes = 0;
             request.OwnerId = source.OwnerId;
+            request.Properties = source.Properties;
             return request;
         }
 

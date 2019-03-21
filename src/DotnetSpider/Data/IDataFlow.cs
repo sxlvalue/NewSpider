@@ -7,6 +7,8 @@ namespace DotnetSpider.Data
     {
         ILogger Logger { get; set; }
 
-        Task<DataFlowResult> Handle(DataFlowContext context);
+        Task InitAsync();
+
+        Task<DataFlowResult> HandleAsync(DataFlowContext context);
     }
 }

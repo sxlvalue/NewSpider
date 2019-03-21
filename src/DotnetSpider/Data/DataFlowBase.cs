@@ -7,7 +7,12 @@ namespace DotnetSpider.Data
     {
         public ILogger Logger { get; set; }
 
-        public abstract Task<DataFlowResult> Handle(DataFlowContext context);
+        public virtual Task InitAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public abstract Task<DataFlowResult> HandleAsync(DataFlowContext context);
 
         public virtual void Dispose()
         {

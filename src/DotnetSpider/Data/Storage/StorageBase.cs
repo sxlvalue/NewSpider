@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Storage
 {
     public abstract class StorageBase : DataFlowBase
     {
-        public override async Task<DataFlowResult> Handle(DataFlowContext context)
+        public override async Task<DataFlowResult> HandleAsync(DataFlowContext context)
         {
             try
             {

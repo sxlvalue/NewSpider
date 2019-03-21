@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 
 namespace DotnetSpider.Downloader
@@ -6,7 +7,7 @@ namespace DotnetSpider.Downloader
     {
         public string Hash { get; set; }
 
-        public string OwnerId { get; set; }        
+        public string OwnerId { get; set; }
 
         public string AgentId { get; set; }
 
@@ -22,5 +23,7 @@ namespace DotnetSpider.Downloader
         public HttpMethod Method { get; set; }
 
         public int RetriedTimes { get; set; }
+
+        public Dictionary<string, string> Properties { get; set; }
     }
 }

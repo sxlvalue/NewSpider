@@ -105,12 +105,19 @@ namespace DotnetSpider
 
                     _logger.LogInformation($"任务 {Id} 分配下载器成功");
 
-                    // 启动速度控制器
-                    StartSpeedControllerAsync().ConfigureAwait(false).GetAwaiter();
+                    // 初始化各数据流处理器
+                    foreach (var dataFlow in _dataFlows)
+                    {
+                        await dataFlow.InitAsync();
+                    }
 
                     // 订阅数据流
                     _mq.Subscribe($"{Framework.ResponseHandlerTopic}{Id}",
                         async message => await HandleMessage(message));
+
+                    // 启动速度控制器
+                    StartSpeedControllerAsync().ConfigureAwait(false).GetAwaiter();
+
 
                     _lastRequestedTime = DateTime.Now;
 
@@ -218,7 +225,7 @@ namespace DotnetSpider
                     bool success = true;
                     foreach (var dataFlow in _dataFlows)
                     {
-                        var dataFlowResult = await dataFlow.Handle(context);
+                        var dataFlowResult = await dataFlow.HandleAsync(context);
                         switch (dataFlowResult)
                         {
                             case DataFlowResult.Success:
