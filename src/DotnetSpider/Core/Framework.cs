@@ -1,12 +1,24 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Configuration;
 
 namespace DotnetSpider.Core
 {
     public static class Framework
     {
+        private static readonly Dictionary<string, string> SwitchMappings =
+            new Dictionary<string, string>
+            {
+                {"-s", "spider"},
+                {"-n", "name"},
+                {"-i", "id"},
+                {"-a", "args"},
+                {"-d", "Distribute"}
+            };
+
         public const string ResponseHandlerTopic = "ResponseHandler-";
         public const string DownloaderCenterTopic = "DownloadCenter";
         public const string StatisticsServiceTopic = "StatisticsService";
@@ -17,7 +29,7 @@ namespace DotnetSpider.Core
         public const string HeartbeatCommand = "Heartbeat";
         public const string ExitCommand = "Exit";
         public const string CommandSeparator = "|";
-        
+
         public static void SetEncoding()
         {
 #if NETSTANDARD
@@ -32,7 +44,21 @@ namespace DotnetSpider.Core
 			ServicePointManager.DefaultConnectionLimit = 1000;
 #endif
         }
-        
+
+        public static ConfigurationBuilder CreateConfigurationBuilder(string config = null, string[] args = null)
+        {
+            var configurationBuilder = new ConfigurationBuilder();
+            configurationBuilder.AddEnvironmentVariables();
+            configurationBuilder.AddCommandLine(Environment.GetCommandLineArgs(), SwitchMappings);
+            if (args != null)
+            {
+                configurationBuilder.AddCommandLine(args, SwitchMappings);
+            }
+
+            configurationBuilder.AddJsonFile(string.IsNullOrWhiteSpace(config) ? "appsettings.json" : config);
+            return configurationBuilder;
+        }
+
         /// <summary>
         /// 打印爬虫框架信息
         /// </summary>
@@ -76,6 +102,7 @@ namespace DotnetSpider.Core
             {
                 // ignore
             }
+
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < width; ++i)
             {

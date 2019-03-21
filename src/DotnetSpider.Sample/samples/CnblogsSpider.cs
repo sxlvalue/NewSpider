@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using DotnetSpider.Core;
 using DotnetSpider.Data;
 using DotnetSpider.Data.Parser;
 using DotnetSpider.Data.Storage;
@@ -13,7 +14,8 @@ namespace DotnetSpider.Sample.samples
     public class CnblogsSpider : Spider
     {
         public CnblogsSpider(IMessageQueue mq, IDownloadService downloadService, IStatisticsService statisticsService,
-            ILoggerFactory loggerFactory) : base(mq, downloadService, statisticsService, loggerFactory)
+            SpiderOptions options,
+            ILoggerFactory loggerFactory) : base(mq, downloadService, statisticsService, options, loggerFactory)
         {
         }
 

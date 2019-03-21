@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using DotnetSpider.Core;
 
 namespace DotnetSpider.Data
 {
@@ -10,6 +11,8 @@ namespace DotnetSpider.Data
 
         private readonly ConcurrentDictionary<string, dynamic> _items = new ConcurrentDictionary<string, dynamic>();
 
+        public SpiderOptions Options { get; set; }
+        
         public string Result { get; set; }
 
         public dynamic this[string key]

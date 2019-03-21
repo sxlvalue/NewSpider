@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Spider.Settings.cs">
+      <Compile Update="Spider.Properties.cs">
         <DependentUpon>Spider.cs</DependentUpon>
       </Compile>
     </ItemGroup>

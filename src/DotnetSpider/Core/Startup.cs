@@ -13,20 +13,10 @@ namespace DotnetSpider.Core
     /// </summary>
     public static class Startup
     {
-        private static readonly Dictionary<string, string> SwitchMappings =
-            new Dictionary<string, string>
-            {
-                {"-s", "spider"},
-                {"-n", "name"},
-                {"-i", "id"},
-                {"-c", "config"},
-                {"-a", "args"},
-            };
-
         /// <summary>
         /// DLL 名字中包含任意一个即是需要扫描的 DLL
         /// </summary>
-        public static readonly List<string> DetectNames = new List<string> {"dotnetspider.sample"};
+        public static readonly List<string> DetectAssembles = new List<string> {"dotnetspider.sample"};
 
         /// <summary>
         /// 运行
@@ -36,10 +26,7 @@ namespace DotnetSpider.Core
         {
             Framework.SetEncoding();
 
-            var configurationBuilder = new ConfigurationBuilder();
-            configurationBuilder.AddCommandLine(args, SwitchMappings);
-            configurationBuilder.AddEnvironmentVariables();
-
+            var configurationBuilder = Framework.CreateConfigurationBuilder(null, args);
             var configuration = configurationBuilder.Build();
             string spider = configuration["spider"];
             if (string.IsNullOrWhiteSpace(spider))
@@ -47,17 +34,13 @@ namespace DotnetSpider.Core
                 throw new SpiderException("未指定需要执行的爬虫");
             }
 
-            string name = configuration["name"];
-            string id = configuration["id"] ?? Guid.NewGuid().ToString("N");
-            string config = configuration["config"];
+            var name = configuration["name"];
+            var id = configuration["id"] ?? Guid.NewGuid().ToString("N");
+            var config = configuration["config"];
             var arguments = configuration["args"]?.Split(' ');
+            var distribute = configuration["Distribute"] == "true";
 
             PrintEnvironment(args);
-
-            // TODO: 根据配置文件启用不同的 Builder
-            var builder = new LocalSpiderBuilder();
-            builder.UseSerilog(); // 可以配置任意日志组件
-            builder.UseConfiguration(config);
 
             var spiderTypes = DetectSpiders();
 
@@ -73,8 +56,20 @@ namespace DotnetSpider.Core
                 return;
             }
 
-            builder.Services.AddTransient(spiderType);
-            var instance = builder.Build(spiderType);
+            var services = new ServiceCollection();
+            services.AddDotnetSpider(builder =>
+            {
+                builder.UseConfiguration(config, args);
+                builder.UseSerilog();
+                if (!distribute)
+                {
+                    builder.UseStandalone();
+                }
+
+                builder.RegisterSpider(spiderType);
+            });
+            var factory = services.BuildServiceProvider().GetRequiredService<SpiderBuilder>().Build();
+            var instance = factory.Create(spiderType);
             if (instance != null)
             {
                 instance.Name = name;
@@ -130,7 +125,7 @@ namespace DotnetSpider.Core
                 .Select(f => Path.GetFileName(f).Replace(".dll", "").Replace(".exe", "")).ToList();
             return
                 files.Where(f => !f.EndsWith("DotnetSpider")
-                                 && DetectNames.Any(n => f.ToLower().Contains(n))).ToList();
+                                 && DetectAssembles.Any(n => f.ToLower().Contains(n))).ToList();
         }
 
         private static void PrintEnvironment(params string[] args)

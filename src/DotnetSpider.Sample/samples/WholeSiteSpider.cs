@@ -5,6 +5,7 @@ using DotnetSpider.Data;
 using DotnetSpider.Data.Parser;
 using DotnetSpider.Data.Storage;
 using DotnetSpider.Downloader;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DotnetSpider.Sample.samples
 {
@@ -12,10 +13,16 @@ namespace DotnetSpider.Sample.samples
     {
         public static void Run1()
         {
-            var builder = new LocalSpiderBuilder();
-            builder.UseSerilog(); // 可以配置任意日志组件
+            var services = new ServiceCollection();
+            services.AddDotnetSpider(builder =>
+            {
+                builder.UseConfiguration();
+                builder.UseSerilog();
+                builder.UseStandalone();
+            });
+            var factory = services.BuildServiceProvider().GetRequiredService<SpiderBuilder>().Build();
+            var spider = factory.Create<Spider>();
 
-            var spider = builder.Build(); // 生成爬虫对象
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
             spider.Name = "博客园全站采集"; // 设置任务名称
             spider.Speed = 1; // 设置采集速度, 表示每秒下载多少个请求, 大于 1 时越大速度越快, 小于 1 时越小越慢, 不能为0.
@@ -33,10 +40,15 @@ namespace DotnetSpider.Sample.samples
 
         public static Task Run2()
         {
-            var builder = new LocalSpiderBuilder();
-            builder.UseSerilog(); // 可以配置任意日志组件
-
-            var spider = builder.Build(); // 生成爬虫对象
+            var services = new ServiceCollection();
+            services.AddDotnetSpider(builder =>
+            {
+                builder.UseConfiguration();
+                builder.UseSerilog();
+                builder.UseStandalone();
+            });
+            var factory = services.BuildServiceProvider().GetRequiredService<SpiderBuilder>().Build();
+            var spider = factory.Create<Spider>();
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
             spider.Name = "博客园全站采集"; // 设置任务名称
             spider.Speed = 1; // 设置采集速度, 表示每秒下载多少个请求, 大于 1 时越大速度越快, 小于 1 时越小越慢, 不能为0.

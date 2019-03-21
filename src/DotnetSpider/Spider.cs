@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DotnetSpider.Core;
@@ -17,174 +18,67 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        private readonly IList<Request> _requests = new List<Request>();
-
-        private readonly List<IDataFlow> _dataFlows = new List<IDataFlow>();
-        private readonly IMessageQueue _mq;
-        private readonly ILogger _logger;
-        private readonly IDownloadService _downloadService;
-        private readonly IStatisticsService _statisticsService;
-        private readonly ILoggerFactory _loggerFactory;
-        private DateTime _lastRequestedTime;
-        private IScheduler _scheduler;
-        private Status _status;
-        private int _emptySleepTime = 30;
-        private int _retryDownloadTimes = 5;
-        private int _statisticsInterval = 5;
-        private double _speed;
-        private int _speedControllerInterval = 1000;
-        private int _dequeueBatchCount = 1;
-        private int _depth = int.MaxValue;
-
-        public event Action<Request> OnDownloading;
-
-        public DownloaderType DownloaderType { get; set; } = DownloaderType.Default;
+        private readonly SpiderOptions _options;
 
         protected virtual void Initialize()
         {
         }
 
-        /// <summary>
-        /// 遍历深度
-        /// </summary>
-        /// <exception cref="ArgumentException"></exception>
-        public int Depth
-        {
-            get => _depth;
-            set
-            {
-                if (value <= 0)
-                {
-                    throw new ArgumentException("遍历深度必须大于 0");
-                }
-
-                CheckIfRunning();
-                _depth = value;
-            }
-        }
-
-        public IScheduler Scheduler
-        {
-            get => _scheduler;
-            set
-            {
-                CheckIfRunning();
-                _scheduler = value;
-            }
-        }
-
-        /// <summary>
-        /// 每秒尝试下载多少个请求
-        /// </summary>
-        public double Speed
-        {
-            get => _speed;
-            set
-            {
-                if (value <= 0)
-                {
-                    throw new SpiderException("下载速度必须大于 0");
-                }
-
-                CheckIfRunning();
-
-                _speed = value;
-
-                if (_speed >= 1)
-                {
-                    _speedControllerInterval = 1000;
-                    _dequeueBatchCount = (int) _speed;
-                }
-                else
-                {
-                    _speedControllerInterval = (int) (1 / _speed) * 1000;
-                    _dequeueBatchCount = 1;
-                }
-
-                var maybeEmptySleepTime = _speedControllerInterval / 1000;
-                if (maybeEmptySleepTime >= EmptySleepTime)
-                {
-                    var larger = (int) (maybeEmptySleepTime * 1.5);
-                    EmptySleepTime = larger > 30 ? larger : 30;
-                }
-            }
-        }
-
-        public int EnqueueBatchCount { get; set; } = 1000;
-
-        /// <summary>
-        /// 上报状态的间隔时间，单位: 秒
-        /// </summary>
-        /// <exception cref="SpiderException"></exception>
-        public int StatisticsInterval
-        {
-            get => _statisticsInterval;
-            set
-            {
-                if (value < 5)
-                {
-                    throw new SpiderException("上报状态间隔必须大于 5 (秒)");
-                }
-
-                CheckIfRunning();
-                _statisticsInterval = value;
-            }
-        }
-
-        public int DownloaderCount { get; set; } = 1;
-
-        public string Id { get; set; }
-
-        public string Name { get; set; }
-
-        public string Cookie { get; set; }
-
-        public int RetryDownloadTimes
-        {
-            get => _retryDownloadTimes;
-            set
-            {
-                if (value <= 0)
-                {
-                    throw new SpiderException("下载重试次数必须大于 0");
-                }
-
-                CheckIfRunning();
-                _retryDownloadTimes = value;
-            }
-        }
-
-        public int EmptySleepTime
-        {
-            get => _emptySleepTime;
-            set
-            {
-                if (value <= _speedControllerInterval)
-                {
-                    throw new SpiderException($"等待结束时间必需大于速度控制器间隔: {_speedControllerInterval}");
-                }
-
-                if (value < 30)
-                {
-                    throw new SpiderException("等待结束时间必需大于 30 (秒)");
-                }
-
-                CheckIfRunning();
-                _emptySleepTime = value;
-            }
-        }
-
         public Spider(IMessageQueue mq,
-            IDownloadService downloadService, IStatisticsService statisticsService,
+            IDownloadService downloadService,
+            IStatisticsService statisticsService,
+            SpiderOptions options,
             ILoggerFactory loggerFactory)
         {
             _downloadService = downloadService;
             _statisticsService = statisticsService;
             _mq = mq;
             _loggerFactory = loggerFactory;
+            _options = options;
             _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
 
             Console.CancelKeyPress += ConsoleCancelKeyPress;
+        }
+
+        public Spider AddDataFlow(IDataFlow dataFlow)
+        {
+            CheckIfRunning();
+            dataFlow.Logger = _loggerFactory.CreateLogger(dataFlow.GetType());
+            _dataFlows.Add(dataFlow);
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public Spider AddRequests(params Request[] requests)
+        {
+            foreach (var request in requests)
+            {
+                request.OwnerId = Id;
+                request.Depth = 1;
+                _requests.Add(request);
+                if (_requests.Count % EnqueueBatchCount == 0)
+                {
+                    EnqueueRequests();
+                }
+            }
+
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public Spider AddRequests(params string[] urls)
+        {
+            foreach (var url in urls)
+            {
+                var request = new Request {Url = url, OwnerId = Id, Depth = 1};
+                _requests.Add(request);
+                if (_requests.Count % EnqueueBatchCount == 0)
+                {
+                    EnqueueRequests();
+                }
+            }
+
+            return this;
         }
 
         public Task RunAsync(params string[] args)
@@ -314,7 +208,10 @@ namespace DotnetSpider
             {
                 _logger.LogInformation($"任务 {Id} 下载 {response.Request.Url} 成功");
 
-                var context = new DataFlowContext();
+                var context = new DataFlowContext
+                {
+                    Options = _options
+                };
                 context.AddResponse(response);
                 try
                 {
@@ -493,6 +390,16 @@ namespace DotnetSpider
             {
                 Thread.Sleep(500);
             }
+        }
+
+        private void EnqueueRequests()
+        {
+            if (_requests.Count <= 0) return;
+
+            var count = _scheduler.Enqueue(_requests);
+            _statisticsService.IncrementTotalAsync(Id, count).ConfigureAwait(false);
+            _logger.LogInformation($"任务 {Id} 请求推送到调度器: {_requests.Count}");
+            _requests.Clear();
         }
     }
 }
