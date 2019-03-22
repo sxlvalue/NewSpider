@@ -7,7 +7,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// 把包含中文的字符串转化成数字
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class DigitUnitFormatter : Data.Parser.Formatter.Formatter
+	public class DigitUnitFormatter : Formatter
 	{
 		private const string UnitStringForShi = "十";
 		private const string UnitStringForBai = "百";

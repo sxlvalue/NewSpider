@@ -44,10 +44,8 @@ namespace DotnetSpider.Selector
 					document.LoadHtml(text);
 					return Select(document.DocumentNode);
 				}
-				else
-				{
-					return Select(text as HtmlNode);
-				}
+
+				return Select(text as HtmlNode);
 			}
 			return null;
 		}
@@ -65,17 +63,13 @@ namespace DotnetSpider.Selector
 				{
 					return SelectList(htmlNode);
 				}
-				else
-				{
-					HtmlDocument document = new HtmlDocument { OptionAutoCloseOnEnd = true };
-					document.LoadHtml(text);
-					return SelectList(document.DocumentNode);
-				}
+
+				HtmlDocument document = new HtmlDocument { OptionAutoCloseOnEnd = true };
+				document.LoadHtml(text);
+				return SelectList(document.DocumentNode);
 			}
-			else
-			{
-				return Enumerable.Empty<dynamic>();
-			}
+
+			return Enumerable.Empty<dynamic>();
 		}
 	}
 }

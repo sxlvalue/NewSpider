@@ -46,7 +46,7 @@ namespace DotnetSpider.Downloader
 
             Logger.LogInformation("本地下载中心启动");
 
-            Mq.Subscribe(Framework.DownloaderCenterTopic, async (message) =>
+            Mq.Subscribe(Framework.DownloaderCenterTopic, async message =>
             {
                 var commandMessage = message.ToCommandMessage();
                 if (commandMessage == null)

@@ -60,7 +60,7 @@ namespace DotnetSpider.HtmlAgilityPack.Css
         public static IEnumerable<HtmlNode> Children(this HtmlNode node)
         {
             if (node == null) throw new ArgumentNullException("node");
-            return node.ChildNodes.Cast<HtmlNode>();
+            return node.ChildNodes;
         }
 
         /// <summary>

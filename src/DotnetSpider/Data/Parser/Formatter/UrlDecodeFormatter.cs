@@ -11,7 +11,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Converts a text string into a URL-encoded string.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property)]
-	public class UrlDecodeFormatter : Data.Parser.Formatter.Formatter
+	public class UrlDecodeFormatter : Formatter
 	{
 		protected override void CheckArguments()
 		{

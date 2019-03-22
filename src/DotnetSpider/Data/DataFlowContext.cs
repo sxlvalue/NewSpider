@@ -1,7 +1,6 @@
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using DotnetSpider.Core;
 
 namespace DotnetSpider.Data
 {
@@ -11,7 +10,12 @@ namespace DotnetSpider.Data
 
         private readonly Dictionary<string, dynamic> _items = new Dictionary<string, dynamic>();
 
-        public SpiderOptions Options { get; set; }
+        public IServiceProvider Services { get;  }      
+
+        public DataFlowContext(IServiceProvider serviceProvider)
+        {
+            Services = serviceProvider;
+        }
 
         public string Result { get; set; }
 

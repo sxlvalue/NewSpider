@@ -250,7 +250,7 @@ namespace DotnetSpider.HtmlAgilityPack.Css
                     Read(ToTokenSpec(Token.Semicolon()));
                     Read(ToTokenSpec(TokenKind.WhiteSpace));
                 }
-                Type type = (Type)formalParameters[i];
+                Type type = formalParameters[i];
                 var typeName = type.Name;
                 if (typeName == TypeCode.String.ToString()) actualParameters[i] = Read(ToTokenSpec(TokenKind.String)).Text;
                 else if (
@@ -607,30 +607,34 @@ namespace DotnetSpider.HtmlAgilityPack.Css
 
         public static void RegisterCustomSelector<TNode>(string name, Func<Selector<TNode>> selector)
         {
-            CustomSelectors.Add(name,new DelegateInfo(){
+            CustomSelectors.Add(name,new DelegateInfo
+            {
 				Method=selector,
 				ParameterTypes=new List<Type>()
 			}  );
         }
         public static void RegisterCustomSelector<TNode, T1>(string name, Func<T1, Selector<TNode>> selector)
         {
-            CustomSelectors.Add(name, new DelegateInfo(){
+            CustomSelectors.Add(name, new DelegateInfo
+            {
 				Method=selector,
-				ParameterTypes=new List<Type>(){ typeof(T1)}
+				ParameterTypes=new List<Type> { typeof(T1)}
 			}  );
         }
         public static void RegisterCustomSelector<TNode, T1, T2>(string name, Func<T1, T2, Selector<TNode>> selector)
         {
-            CustomSelectors.Add(name, new DelegateInfo(){
+            CustomSelectors.Add(name, new DelegateInfo
+            {
 				Method=selector,
-				ParameterTypes=new List<Type>(){ typeof(T1),typeof(T2)}
+				ParameterTypes=new List<Type> { typeof(T1),typeof(T2)}
 			} );
         }
         public static void RegisterCustomSelector<TNode, T1, T2, T3>(string name, Func<T1, T2, T3, Selector<TNode>> selector)
         {
-            CustomSelectors.Add(name, new DelegateInfo(){
+            CustomSelectors.Add(name, new DelegateInfo
+            {
 				Method=selector,
-				ParameterTypes=new List<Type>(){ typeof(T1),typeof(T2),typeof(T3)}
+				ParameterTypes=new List<Type> { typeof(T1),typeof(T2),typeof(T3)}
 			});
         }
 

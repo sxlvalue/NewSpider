@@ -1,21 +1,16 @@
+using System;
 using System.Threading.Tasks;
-using DotnetSpider.Core;
 using DotnetSpider.Data;
 using DotnetSpider.Data.Parser;
 using DotnetSpider.Data.Storage;
 using DotnetSpider.Downloader;
-using DotnetSpider.MessageQueue;
 using DotnetSpider.Scheduler;
-using DotnetSpider.Statistics;
-using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Sample.samples
 {
     public class CnblogsSpider : Spider
     {
-        public CnblogsSpider(IMessageQueue mq, IDownloadService downloadService, IStatisticsService statisticsService,
-            SpiderOptions options,
-            ILoggerFactory loggerFactory) : base(mq, downloadService, statisticsService, options, loggerFactory)
+        public CnblogsSpider(IServiceProvider services) : base(services)
         {
         }
 

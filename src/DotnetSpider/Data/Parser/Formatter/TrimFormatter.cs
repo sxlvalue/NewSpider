@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Removes all leading and trailing white-space characters from the current System.String object.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class TrimFormatter : Data.Parser.Formatter.Formatter
+	public class TrimFormatter : Formatter
 	{
 		/// <summary>
 		/// Trim 类型

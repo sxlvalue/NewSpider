@@ -7,7 +7,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	///  In a specified input string, replaces all strings that match a specified regular expression with a specified replacement string.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class RegexReplaceFormatter : Data.Parser.Formatter.Formatter
+	public class RegexReplaceFormatter : Formatter
 	{
 		/// <summary>
 		/// 正则表达式

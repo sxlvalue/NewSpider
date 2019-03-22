@@ -161,31 +161,29 @@ namespace DotnetSpider.Selector
                     }
                 }
             }
-            else
+
+            var document = new HtmlDocument();
+            document.LoadHtml(element.ToString());
+
+            switch (option)
             {
-                var document = new HtmlDocument();
-                document.LoadHtml(element.ToString());
-
-                switch (option)
+                case ValueOption.OuterHtml:
                 {
-                    case ValueOption.OuterHtml:
-                    {
-                        return document.DocumentNode.OuterHtml;
-                    }
-                    case ValueOption.InnerHtml:
-                    {
-                        return document.DocumentNode.InnerHtml;
-                    }
-                    case ValueOption.InnerText:
-                    {
-                        // Cost too much, need re-implement
+                    return document.DocumentNode.OuterHtml;
+                }
+                case ValueOption.InnerHtml:
+                {
+                    return document.DocumentNode.InnerHtml;
+                }
+                case ValueOption.InnerText:
+                {
+                    // Cost too much, need re-implement
 
-                        return document.DocumentNode.InnerText;
-                    }
-                    default:
-                    {
-                        return element.ToString();
-                    }
+                    return document.DocumentNode.InnerText;
+                }
+                default:
+                {
+                    return element.ToString();
                 }
             }
         }

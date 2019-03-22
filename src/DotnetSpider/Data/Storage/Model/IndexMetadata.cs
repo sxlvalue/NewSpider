@@ -14,6 +14,8 @@ namespace DotnetSpider.Data.Storage.Model
             _name = $"{(_isUnique ? "UNIQUE_" : "INDEX_")}{string.Join("_", columns.Select(x=>x.ToUpper()))}";
         }
 
+        public string Name => _name;
+        
         public bool IsUnique => _isUnique;
 
         public string[] Columns { get; }

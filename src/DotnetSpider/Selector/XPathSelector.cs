@@ -48,10 +48,8 @@ namespace DotnetSpider.Selector
 					}
 					return null;
 				}
-				else
-				{
-					return node;
-				}
+
+				return node;
 			}
 			return null;
 		}

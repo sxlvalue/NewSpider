@@ -1,6 +1,7 @@
 using System;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
+using DotnetSpider.Data.Storage;
 using DotnetSpider.Downloader;
 using DotnetSpider.Downloader.Internal;
 using DotnetSpider.MessageQueue;
@@ -21,8 +22,11 @@ namespace DotnetSpider
         {
             SpiderBuilder builder = new SpiderBuilder(services);
             configureBuilder?.Invoke(builder);
-            services.AddSingleton(builder);
+            services.AddSingleton(provider => builder.Build());
+            
             services.AddScoped<SpiderOptions>();
+            // Add all storage
+            services.AddSingleton<MongoEntityStorage>();
             return services;
         }
 
@@ -30,10 +34,7 @@ namespace DotnetSpider
             string[] args = null)
         {
             var configurationBuilder = Framework.CreateConfigurationBuilder(config, args);
-
-            builder.Services.AddSingleton<IConfigurationBuilder>(configurationBuilder);
-            builder.Services.AddScoped<IConfiguration>(provider =>
-                provider.GetRequiredService<IConfigurationBuilder>().Build());
+            builder.Services.AddSingleton<IConfiguration>(configurationBuilder.Build());
             return builder;
         }
 

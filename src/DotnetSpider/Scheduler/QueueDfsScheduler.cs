@@ -37,33 +37,31 @@ namespace DotnetSpider.Scheduler
             {
                 return new Request[0];
             }
+
+            var dequeueCount = count;
+            int start;
+            if (_requests[ownerId].Count < count)
+            {
+                dequeueCount = _requests[ownerId].Count;
+                start = 0;
+            }
             else
             {
-                var dequeueCount = count;
-                int start;
-                if (_requests[ownerId].Count < count)
-                {
-                    dequeueCount = _requests[ownerId].Count;
-                    start = 0;
-                }
-                else
-                {
-                    start = _requests[ownerId].Count - dequeueCount - 1;
-                }
-
-                var requests = new List<Request>();
-                for (int i = _requests.Count - 1; i >= start; --i)
-                {
-                    requests.Add(_requests[ownerId][i]);
-                }
-
-                if (dequeueCount > 0)
-                {
-                    _requests[ownerId].RemoveRange(start, dequeueCount);
-                }
-
-                return requests.ToArray();
+                start = _requests[ownerId].Count - dequeueCount - 1;
             }
+
+            var requests = new List<Request>();
+            for (int i = _requests.Count - 1; i >= start; --i)
+            {
+                requests.Add(_requests[ownerId][i]);
+            }
+
+            if (dequeueCount > 0)
+            {
+                _requests[ownerId].RemoveRange(start, dequeueCount);
+            }
+
+            return requests.ToArray();
         }
     }
 }

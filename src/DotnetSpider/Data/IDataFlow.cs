@@ -1,9 +1,10 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Data
 {
-    public interface IDataFlow : System.IDisposable
+    public interface IDataFlow : IDisposable
     {
         ILogger Logger { get; set; }
 

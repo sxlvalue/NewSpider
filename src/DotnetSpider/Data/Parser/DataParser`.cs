@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Selector;
+using Microsoft.Extensions.Logging;
 
 namespace DotnetSpider.Data.Parser
 {
@@ -27,7 +28,7 @@ namespace DotnetSpider.Data.Parser
             }
 
             var selectable = context.GetSelectable();
-            List<Dictionary<string, string>> results = new List<Dictionary<string, string>>();
+            List<dynamic> results = new List<dynamic>();
             if (selectable.Properties == null)
             {
                 selectable.Properties = new Dictionary<string, object>();
@@ -80,6 +81,10 @@ namespace DotnetSpider.Data.Parser
                         {
                             results.Add(obj);
                         }
+                        else
+                        {
+                            Logger?.LogWarning($"解析到空数据，类型: {_model.TypeName}");
+                        }
                     }
                 }
             }
@@ -89,6 +94,10 @@ namespace DotnetSpider.Data.Parser
                 if (obj != null)
                 {
                     results.Add(obj);
+                }
+                else
+                {
+                    Logger?.LogWarning($"解析到空数据，类型: {_model.TypeName}");
                 }
             }
 
@@ -108,10 +117,10 @@ namespace DotnetSpider.Data.Parser
             return Task.FromResult(DataFlowResult.Success);
         }
 
-        private Dictionary<string, string> ParseObject(Dictionary<string, string> environments, ISelectable selectable,
+        private T ParseObject(Dictionary<string, string> environments, ISelectable selectable,
             int index)
         {
-            Dictionary<string, string> dataObject = new Dictionary<string, string>();
+            var dataObject = new T();
 
             foreach (var field in _model.ValueSelectors)
             {
@@ -122,11 +131,23 @@ namespace DotnetSpider.Data.Parser
                     {
                         value = index.ToString();
                     }
+                    else if (field.Expression == "GUID")
+                    {
+                        value = Guid.NewGuid().ToString();
+                    }
+                    else if (field.Expression == "DATE")
+                    {
+                        value = DateTime.Now.Date.ToString("yyyy-MM-dd");
+                    }
+                    else if (field.Expression == "DATETIME")
+                    {
+                        value = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+                    }
                     else
                     {
-                        if (environments.ContainsKey(field.Name))
+                        if (environments.ContainsKey(field.Expression))
                         {
-                            value = environments[field.Name];
+                            value = environments[field.Expression];
                         }
                     }
                 }
@@ -160,10 +181,17 @@ namespace DotnetSpider.Data.Parser
                     }
                 }
 
-                dataObject.Add(field.Name, value);
+                var newValue = Convert.ChangeType(value, field.PropertyInfo.PropertyType);
+                if (newValue == null && field.NotNull)
+                {
+                    dataObject = null;
+                    break;
+                }
+
+                field.PropertyInfo.SetValue(dataObject, newValue);
             }
 
-            return dataObject.Keys.Count > 0 ? dataObject : null;
+            return dataObject;
         }
     }
 }

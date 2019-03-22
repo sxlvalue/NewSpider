@@ -8,8 +8,6 @@ namespace DotnetSpider.Core
 
         public string ConnectionString => _configuration["ConnectionString"];
 
-        public string Provider => _configuration["Provider"];
-
         public bool Distribute => "true" == _configuration["Distribute"];
 
         public SpiderOptions(IConfiguration configuration)

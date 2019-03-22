@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Returns a new string in which all occurrences of a specified string in the current instance are replaced with another specified string.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class ReplaceFormatter : Data.Parser.Formatter.Formatter
+	public class ReplaceFormatter : Formatter
 	{
 		/// <summary>
 		/// 需要被替换的值

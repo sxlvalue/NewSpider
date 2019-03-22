@@ -35,14 +35,12 @@ namespace DotnetSpider.Data.Parser
                         {
                             return Selectors.Regex(expression);
                         }
-                        else
+
+                        if (int.TryParse(selector.Arguments, out var group))
                         {
-                            if (int.TryParse(selector.Arguments, out var group))
-                            {
-                                return Selectors.Regex(expression, group);
-                            }
-                            throw new ArgumentException($"Regex argument should be a number set to group: {selector}");
+                            return Selectors.Regex(expression, @group);
                         }
+                        throw new ArgumentException($"Regex argument should be a number set to group: {selector}");
                     }
                     case SelectorType.XPath:
                     {
@@ -55,10 +53,8 @@ namespace DotnetSpider.Data.Parser
                     }
                 }
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         internal static void NotNullExpression(Attribute.Selector selector)

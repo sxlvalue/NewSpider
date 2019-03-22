@@ -98,6 +98,6 @@ namespace DotnetSpider.HtmlAgilityPack.Css
         /// <summary>
         /// Represents an arbitrary character
         /// </summary>
-        Char,
+        Char
     }
 }

@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// 截取数值
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class CutoutFormatter : Data.Parser.Formatter.Formatter
+	public class CutoutFormatter : Formatter
 	{
 		/// <summary>
 		/// 起始部分的内容

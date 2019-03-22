@@ -1,3 +1,4 @@
+using System.Reflection;
 using DotnetSpider.Selector;
 
 namespace DotnetSpider.Data.Parser.Attribute
@@ -7,6 +8,10 @@ namespace DotnetSpider.Data.Parser.Attribute
     /// </summary>
     public class ValueSelector : Selector
     {
+        internal PropertyInfo PropertyInfo { get; set; }
+        
+        internal  bool NotNull { get; set; }
+        
         public string Name { get; set; }
 
         /// <summary>

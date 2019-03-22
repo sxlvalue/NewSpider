@@ -12,7 +12,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Converts a text string into a URL-encoded string.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property)]
-	public class UrlEncodeFormatter : Data.Parser.Formatter.Formatter
+	public class UrlEncodeFormatter : Formatter
 	{
 		/// <summary>
 		/// 编码的名称

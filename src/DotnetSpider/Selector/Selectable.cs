@@ -210,7 +210,7 @@ namespace DotnetSpider.Selector
 			List<ISelectable> result = new List<ISelectable>();
 			foreach (var element in Elements)
 			{
-				result.Add(new Selectable(new List<dynamic>() {element}));
+				result.Add(new Selectable(new List<dynamic> {element}));
 			}
 
 			return result;

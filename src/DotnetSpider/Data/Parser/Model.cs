@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using DotnetSpider.Data.Parser.Attribute;
 using DotnetSpider.Data.Storage.Model;
+using Newtonsoft.Json;
 
 namespace DotnetSpider.Data.Parser
 {
@@ -80,6 +81,8 @@ namespace DotnetSpider.Data.Parser
 
                 valueSelector.Formatters = property.GetCustomAttributes(typeof(Formatter.Formatter), true)
                     .Select(p => (Formatter.Formatter) p).ToArray();
+                valueSelector.PropertyInfo = property;
+                valueSelector.NotNull = property.GetCustomAttributes(typeof(Required), false).Any();
                 valueSelectors.Add(valueSelector);
             }
 

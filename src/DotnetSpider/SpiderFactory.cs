@@ -15,7 +15,6 @@ namespace DotnetSpider
             _serviceProvider = serviceProvider;
         }
 
-
         public Spider Create()
         {
             return _serviceProvider.GetRequiredService<Spider>();
@@ -35,6 +34,11 @@ namespace DotnetSpider
             }
 
             return (Spider) _serviceProvider.GetRequiredService(type);
+        }
+
+        public SpiderOptions GetOptions()
+        {
+            return _serviceProvider.GetRequiredService<SpiderOptions>();
         }
     }
 }

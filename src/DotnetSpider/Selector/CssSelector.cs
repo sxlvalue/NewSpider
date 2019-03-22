@@ -48,10 +48,8 @@ namespace DotnetSpider.Selector
 				{
 					return elements[0];
 				}
-				else
-				{
-					return elements[0].Attributes[_attrName]?.Value?.Trim();
-				}
+
+				return elements[0].Attributes[_attrName]?.Value?.Trim();
 			}
 			return null;
 		}
@@ -68,19 +66,17 @@ namespace DotnetSpider.Selector
 			{
 				return els;
 			}
-			else
+
+			List<string> result = new List<string>();
+			foreach (var el in els)
 			{
-				List<string> result = new List<string>();
-				foreach (var el in els)
+				var attr = el.Attributes[_attrName];
+				if (attr != null && !string.IsNullOrWhiteSpace(attr.Value))
 				{
-					var attr = el.Attributes[_attrName];
-					if (attr != null && !string.IsNullOrWhiteSpace(attr.Value))
-					{
-						result.Add(attr.Value.Trim());
-					}
+					result.Add(attr.Value.Trim());
 				}
-				return result;
 			}
+			return result;
 		}
 
 		/// <summary>

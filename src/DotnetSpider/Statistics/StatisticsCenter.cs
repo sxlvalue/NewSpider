@@ -31,7 +31,7 @@ namespace DotnetSpider.Statistics
 
             _logger.LogInformation("统计中心启动");
 
-            _mq.Subscribe(Framework.StatisticsServiceTopic, async (message) =>
+            _mq.Subscribe(Framework.StatisticsServiceTopic, async message =>
             {
                 var commandMessage = message.ToCommandMessage();
                 if (commandMessage == null)

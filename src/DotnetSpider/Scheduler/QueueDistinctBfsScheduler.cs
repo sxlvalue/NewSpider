@@ -33,16 +33,14 @@ namespace DotnetSpider.Scheduler
             {
                 return new Request[0];
             }
-            else
-            {
-                var requests = _requests[ownerId].Take(count).ToArray();
-                if (requests.Length > 0)
-                {
-                    _requests[ownerId].RemoveRange(0, requests.Length);
-                }
 
-                return requests;
+            var requests = _requests[ownerId].Take(count).ToArray();
+            if (requests.Length > 0)
+            {
+                _requests[ownerId].RemoveRange(0, requests.Length);
             }
+
+            return requests;
         }
     }
 }

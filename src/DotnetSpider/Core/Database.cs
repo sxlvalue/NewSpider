@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 
 namespace DotnetSpider.Core
 {
@@ -14,13 +15,13 @@ namespace DotnetSpider.Core
         /// <summary>
         /// MySql
         /// </summary>
-        [System.ComponentModel.Description("MySql.Data.MySqlClient")]
+        [Description("MySql.Data.MySqlClient")]
         MySql,
 
         /// <summary>
         /// SqlServer
         /// </summary>
-        [System.ComponentModel.Description("System.Data.SqlClient")]
+        [Description("System.Data.SqlClient")]
         SqlServer,
 
         /// <summary>
@@ -41,6 +42,6 @@ namespace DotnetSpider.Core
         /// <summary>
         /// ClickHouse
         /// </summary>
-        ClickHouse,
+        ClickHouse
     }
 }

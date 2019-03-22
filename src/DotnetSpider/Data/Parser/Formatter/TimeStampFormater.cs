@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// 把Unix时间转换成DateTime
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class TimeStampFormatter : Data.Parser.Formatter.Formatter
+	public class TimeStampFormatter : Formatter
 	{
 		/// <summary>
 		/// 实现数值的转化

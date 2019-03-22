@@ -26,7 +26,7 @@ namespace DotnetSpider.Downloader
                 Logger?.LogInformation($"任务 {request.OwnerId} 下载 {request.Url} 成功");
                 return new Response
                 {
-                    Content = content,
+                    RawText = content,
                     Request = request,
                     AgentId = AgentId,
                     Success = true

@@ -29,10 +29,8 @@ namespace DotnetSpider.Downloader.Internal
                 var agents = _agents.Where(x => agentIds.Contains(x.Key)).Select(x => x.Value).ToList();
                 return Task.FromResult(agents);
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public Task RegisterAsync(DownloaderAgent agent)

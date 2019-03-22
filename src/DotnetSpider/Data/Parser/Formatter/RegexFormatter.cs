@@ -47,15 +47,11 @@ namespace DotnetSpider.Data.Parser.Formatter
 				{
 					return Group < 0 ? matches[0].Value : matches[0].Groups[Group].Value;
 				}
-				else
-				{
-					return True;
-				}
+
+				return True;
 			}
-			else
-			{
-				return False == Id ? "" : False;
-			}
+
+			return False == Id ? "" : False;
 		}
 
 		/// <summary>

@@ -93,10 +93,8 @@ namespace DotnetSpider.Selector
 				}
 				return list;
 			}
-			else
-			{
-				return Enumerable.Empty<dynamic>();
-			}
+
+			return Enumerable.Empty<dynamic>();
 		}
 	}
 }

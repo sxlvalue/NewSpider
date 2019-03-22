@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// 如果值等于EqualValue, 则返回Displacement. 比如用于: 采集的结果为: 是, 转化为 False
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class DisplaceFormatter : Data.Parser.Formatter.Formatter
+	public class DisplaceFormatter : Formatter
 	{
 		/// <summary>
 		/// 比较的值

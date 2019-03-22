@@ -7,7 +7,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Splits a string into substrings based on the strings in an array. You can specify whether the substrings include empty array elements.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property)]
-	public class SplitFormatter : Data.Parser.Formatter.Formatter
+	public class SplitFormatter : Formatter
 	{
 		/// <summary>
 		///  A string array that delimits the substrings in this string, an empty array that contains no delimiters, or null.
@@ -32,10 +32,8 @@ namespace DotnetSpider.Data.Parser.Formatter
 			{
 				return result[ElementAt];
 			}
-			else
-			{
-				return ElementAt == int.MaxValue ? result.Last() : null;
-			}
+
+			return ElementAt == int.MaxValue ? result.Last() : null;
 		}
 
 		/// <summary>

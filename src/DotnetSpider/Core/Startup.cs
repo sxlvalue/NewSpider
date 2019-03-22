@@ -67,7 +67,7 @@ namespace DotnetSpider.Core
 
                 builder.RegisterSpider(spiderType);
             });
-            var factory = services.BuildServiceProvider().GetRequiredService<SpiderBuilder>().Build();
+            var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
             var instance = factory.Create(spiderType);
             if (instance != null)
             {

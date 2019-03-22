@@ -7,7 +7,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// 如果数值符合正则表达式则在数值后面追加指定的内容. 如采集到的内容为数字, 则在后面添加 "人"
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class RegexAppendFormatter : Data.Parser.Formatter.Formatter
+	public class RegexAppendFormatter : Formatter
 	{
 		/// <summary>
 		/// 正则表达式

@@ -6,7 +6,7 @@ namespace DotnetSpider.Downloader
 
         public string Exception { get; set; }
 
-        public string Content { get; set; }
+        public string RawText { get; set; }
 
         public string AgentId { get; set; }
 

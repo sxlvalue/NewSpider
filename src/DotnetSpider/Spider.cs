@@ -11,6 +11,7 @@ using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
 using DotnetSpider.Scheduler;
 using DotnetSpider.Statistics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -19,24 +20,26 @@ namespace DotnetSpider
     public partial class Spider
     {
         private readonly SpiderOptions _options;
+        private readonly IServiceProvider _services;
 
         protected virtual void Initialize()
         {
         }
 
-        public Spider(IMessageQueue mq,
-            IDownloadService downloadService,
-            IStatisticsService statisticsService,
-            SpiderOptions options,
-            ILoggerFactory loggerFactory)
+        protected virtual void NewId()
         {
-            _downloadService = downloadService;
-            _statisticsService = statisticsService;
-            _mq = mq;
-            _loggerFactory = loggerFactory;
-            _options = options;
-            _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
+            Id = Guid.NewGuid().ToString("N");
+        }
 
+        public Spider(IServiceProvider services)
+        {
+            _services = services;
+            _downloadService = services.GetRequiredService<IDownloadService>();
+            _statisticsService = services.GetRequiredService<IStatisticsService>();
+            _mq = services.GetRequiredService<IMessageQueue>();
+            _loggerFactory = services.GetRequiredService<ILoggerFactory>();
+            _options = services.GetRequiredService<SpiderOptions>();
+            _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
             Console.CancelKeyPress += ConsoleCancelKeyPress;
         }
 
@@ -211,14 +214,11 @@ namespace DotnetSpider
             }
 
             // 处理下载成功的请求
-            Parallel.ForEach(successResponses, async (response) =>
+            Parallel.ForEach(successResponses, async response =>
             {
                 _logger.LogInformation($"任务 {Id} 下载 {response.Request.Url} 成功");
 
-                var context = new DataFlowContext
-                {
-                    Options = _options
-                };
+                var context = new DataFlowContext(_services.CreateScope().ServiceProvider);
                 context.AddResponse(response);
                 try
                 {

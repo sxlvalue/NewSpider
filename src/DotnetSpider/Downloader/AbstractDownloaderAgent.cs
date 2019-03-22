@@ -229,11 +229,9 @@ namespace DotnetSpider.Downloader
                 downloaderEntry.LastUsedTime = DateTime.Now;
                 return response;
             }
-            else
-            {
-                Logger.LogError($"找不到 {request.OwnerId} 的下载器");
-                return null;
-            }
+
+            Logger.LogError($"找不到 {request.OwnerId} 的下载器");
+            return null;
         }
 
         private Task ReleaseDownloaderAsync()

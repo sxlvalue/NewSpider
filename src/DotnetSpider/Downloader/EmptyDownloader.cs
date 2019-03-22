@@ -9,7 +9,7 @@ namespace DotnetSpider.Downloader
             return Task.FromResult(new Response
             {
                 Request = request,
-                Content = "From empty downloader"
+                RawText = "From empty downloader"
             });
         }
     }

@@ -55,8 +55,14 @@ namespace DotnetSpider.Core
                 configurationBuilder.AddCommandLine(args, SwitchMappings);
             }
 
-            configurationBuilder.AddJsonFile(string.IsNullOrWhiteSpace(config) ? "appsettings.json" : config);
+            configurationBuilder.AddJsonFile(string.IsNullOrWhiteSpace(config) ? "appsettings.json" : config, false,
+                true);
             return configurationBuilder;
+        }
+
+        public static IConfiguration CreateConfiguration(string config=null,string[] args=null)
+        {
+            return CreateConfigurationBuilder(config, args).Build();
         }
 
         /// <summary>

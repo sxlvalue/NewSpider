@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DotnetSpider.Downloader;
@@ -12,7 +13,7 @@ namespace DotnetSpider.Data.Parser
         {
             var response = context.GetResponse();
             context.AddItem("URL", response.Request.Url);
-            context.AddItem("Content", response.Content);
+            context.AddItem("Content", response.RawText);
             return Task.FromResult(DataFlowResult.Success);
         }
 
@@ -29,7 +30,7 @@ namespace DotnetSpider.Data.Parser
 #if !NETSTANDARD
                         urls.Add(System.Web.HttpUtility.HtmlDecode(System.Web.HttpUtility.UrlDecode(link)));
 #else
-                        urls.Add(System.Net.WebUtility.HtmlDecode(System.Net.WebUtility.UrlDecode(link)));
+                        urls.Add(WebUtility.HtmlDecode(WebUtility.UrlDecode(link)));
 #endif
                     }
                 }

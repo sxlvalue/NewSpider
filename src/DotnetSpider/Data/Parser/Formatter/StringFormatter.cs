@@ -6,7 +6,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 	/// Replaces one or more format items in a specified string with the string representation of a specified object.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-	public class StringFormatter : Data.Parser.Formatter.Formatter
+	public class StringFormatter : Formatter
 	{
 		/// <summary>
 		/// A composite format string.

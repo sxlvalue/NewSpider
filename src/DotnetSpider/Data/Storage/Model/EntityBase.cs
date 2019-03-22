@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using DotnetSpider.Core;
+using Newtonsoft.Json;
 
 namespace DotnetSpider.Data.Storage.Model
 {
@@ -10,22 +12,56 @@ namespace DotnetSpider.Data.Storage.Model
     {
         private Lazy<TableMetadata> _tableMetadata;
 
-        public void SetSchema(string database, string table)
-        {
-            _tableMetadata.Value.Schema = new Schema(database, table);
-        }
-
         public TableMetadata GetTableMetadata()
         {
             _tableMetadata = new Lazy<TableMetadata>();
+
             Configure();
+
             var type = typeof(T);
-            var properties = type.GetProperties().Where(x => x.CanRead && x.CanWrite).ToList();
-            foreach (var property in properties)
+
+            var schema = type.GetCustomAttributes(typeof(Schema), false).FirstOrDefault();
+            if (schema != null)
             {
-                _tableMetadata.Value.Columns.Add(property.Name, property.PropertyType.Name);
+                _tableMetadata.Value.Schema = (Schema) schema;
+                if (string.IsNullOrWhiteSpace(_tableMetadata.Value.Schema.Table))
+                {
+                    _tableMetadata.Value.Schema = new Schema(_tableMetadata.Value.Schema.Database, type.Name);
+                }
             }
 
+            var properties = type.GetProperties().Where(x => x.CanRead && x.CanWrite).ToList();
+
+            foreach (var property in properties)
+            {
+                var column = new Column
+                {
+                    Name = property.Name,
+                    Type = property.PropertyType.Name,
+                    Required = property.GetCustomAttributes(typeof(Required), false).Any()
+                };
+
+                var stringLength =
+                    (StringLengthAttribute) property.GetCustomAttributes(typeof(StringLengthAttribute), false)
+                        .FirstOrDefault();
+                if (stringLength != null)
+                {
+                    column.Length = stringLength.MaximumLength;
+                }
+
+                _tableMetadata.Value.Columns.Add(property.Name, column);
+            }
+
+            if (_tableMetadata.Value.Primary == null || _tableMetadata.Value.Primary.Count == 0)
+            {
+                var primary = properties.FirstOrDefault(x => x.Name.ToLower() == "id");
+                if (primary != null)
+                {
+                    _tableMetadata.Value.Primary = new HashSet<string> {primary.Name};
+                }
+            }
+
+            _tableMetadata.Value.TypeName = type.FullName;
             return _tableMetadata.Value;
         }
 

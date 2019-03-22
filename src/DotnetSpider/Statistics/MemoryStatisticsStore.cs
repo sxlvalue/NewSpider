@@ -94,7 +94,7 @@ namespace DotnetSpider.Statistics
 
         public Task<List<DownloadStatistics>> GetDownloadStatisticsListAsync(int page, int size)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public Task<DownloadStatistics> GetDownloadStatisticsAsync(string agentId)
@@ -121,7 +121,7 @@ namespace DotnetSpider.Statistics
 
         public Task<List<DownloadStatistics>> GetSpiderStatisticsListAsync(int page, int size)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

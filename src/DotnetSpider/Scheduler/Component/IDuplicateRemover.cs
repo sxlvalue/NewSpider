@@ -1,8 +1,9 @@
+using System;
 using DotnetSpider.Downloader;
 
 namespace DotnetSpider.Scheduler.Component
 {
-    public interface IDuplicateRemover : System.IDisposable
+    public interface IDuplicateRemover : IDisposable
     {
         /// <summary>
         /// Check whether the request is duplicate.

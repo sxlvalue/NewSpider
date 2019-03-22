@@ -14,24 +14,22 @@ namespace DotnetSpider.Downloader
             {
                 case ContentType.Auto:
                 {
-                    return IsJson(response.Content)
-                        ? new Selectable(response.Content)
-                        : new Selectable(response.Content, response.Request.Url, removeOutboundLinks);
+                    return IsJson(response.RawText)
+                        ? new Selectable(response.RawText)
+                        : new Selectable(response.RawText, response.Request.Url, removeOutboundLinks);
                 }
                 case ContentType.Html:
                 {
-                    return new Selectable(response.Content, response.Request.Url, removeOutboundLinks);
+                    return new Selectable(response.RawText, response.Request.Url, removeOutboundLinks);
                 }
                 case ContentType.Json:
                 {
-                    if (IsJson(response.Content))
+                    if (IsJson(response.RawText))
                     {
-                        return new Selectable(response.Content);
+                        return new Selectable(response.RawText);
                     }
-                    else
-                    {
-                        throw new SpiderException("内容不是合法的 Json");
-                    }
+
+                    throw new SpiderException("内容不是合法的 Json");
                 }
                 default:
                 {
