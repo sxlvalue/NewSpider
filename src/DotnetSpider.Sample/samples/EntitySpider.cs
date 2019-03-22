@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using DotnetSpider.Core;
 using DotnetSpider.Data.Parser;
 using DotnetSpider.Data.Parser.Attribute;
 using DotnetSpider.Data.Parser.Formatter;
 using DotnetSpider.Data.Storage;
 using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Downloader;
+using DotnetSpider.RequestSupply;
 using DotnetSpider.Scheduler;
 using DotnetSpider.Selector;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +43,7 @@ namespace DotnetSpider.Sample.samples
             Speed = 1;
             Depth = 3;
             DownloaderType = DownloaderType.Default;
-            AddDataFlow(new DataParser<BaiduSearchEntry>()).AddDataFlow(new MySqlEntityStorage());
+            AddDataFlow(new DataParser<BaiduSearchEntry>()).AddDataFlow(GetDefaultStorage());
             AddRequests(new Request
             {
                 Url = "https://news.cnblogs.com/n/page/1/",

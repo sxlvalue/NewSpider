@@ -41,13 +41,8 @@ namespace DotnetSpider.Data.Storage
                 var collection = db.GetCollection<BsonDocument>(tableMetadata.Schema.Table);
 
                 var bsonDocs = new List<BsonDocument>();
-                foreach (var data in (List<Dictionary<string, string>>) item.Value)
+                foreach (var data in item.Value)
                 {
-                    if (!data.ContainsKey("creation_time"))
-                    {
-                        data.Add("creation_time", DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
-                    }
-
                     bsonDocs.Add(BsonDocument.Create(data));
                 }
 

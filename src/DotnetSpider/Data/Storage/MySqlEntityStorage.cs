@@ -9,6 +9,12 @@ namespace DotnetSpider.Data.Storage
 {
     public class MySqlEntityStorage : RelationalDatabaseEntityStorageBase
     {
+        public MySqlEntityStorage(StorageType storageType = StorageType.InsertIgnoreDuplicate,
+            string connectionString = null) : base(storageType,
+            connectionString)
+        {
+        }
+
         protected override IDbConnection CreateDbConnection(string connectString)
         {
             return new MySqlConnection(connectString);
@@ -18,15 +24,13 @@ namespace DotnetSpider.Data.Storage
         {
             var sqlStatements = new SqlStatements
             {
-                InsertSql = GenerateInsertSql(tableMetadata, true),
-                // InsertAndIgnoreDuplicateSql = GenerateInsertSql(tableMetadata, true),
+                InsertSql = GenerateInsertSql(tableMetadata, false),
+                InsertIgnoreDuplicateSql = GenerateInsertSql(tableMetadata, true),
                 // InsertNewAndUpdateOldSql = GenerateInsertNewAndUpdateOldSql(tableMetadata),
-                // UpdateSql = GenerateUpdateSql(tableMetadata),
+                UpdateSql = GenerateUpdateSql(tableMetadata),
                 // SelectSql = GenerateSelectSql(tableMetadata)
                 CreateTableSql = GenerateCreateTableSql(tableMetadata),
-                CreateDatabaseSql = string.IsNullOrWhiteSpace(tableMetadata.Schema.Database)
-                    ? ""
-                    : $"CREATE SCHEMA IF NOT EXISTS `{GetNameSql(tableMetadata.Schema.Database)}` DEFAULT CHARACTER SET utf8mb4;"
+                CreateDatabaseSql = GenerateCreateDatabaseSql(tableMetadata)
             };
             return sqlStatements;
         }
@@ -40,6 +44,13 @@ namespace DotnetSpider.Data.Storage
             }
 
             conn.Execute(sqlStatements.CreateTableSql);
+        }
+
+        protected virtual string GenerateCreateDatabaseSql(TableMetadata tableMetadata)
+        {
+            return string.IsNullOrWhiteSpace(tableMetadata.Schema.Database)
+                ? ""
+                : $"CREATE SCHEMA IF NOT EXISTS `{GetNameSql(tableMetadata.Schema.Database)}` DEFAULT CHARACTER SET utf8mb4;";
         }
 
         /// <summary>
@@ -119,6 +130,32 @@ namespace DotnetSpider.Data.Storage
             return sql;
         }
 
+        protected virtual string GenerateUpdateSql(TableMetadata tableMetadata)
+        {
+            // 无主键, 无更新字段都无法生成更新SQL
+            if (tableMetadata.Updates == null || tableMetadata.Updates.Count == 0)
+            {
+                return null;
+            }
+
+            var tableName = GetNameSql(tableMetadata.Schema.Table);
+            var database = GetNameSql(tableMetadata.Schema.Database);
+
+            var where = "";
+            foreach (var column in tableMetadata.Primary)
+            {
+                where += $" `{GetNameSql(column)}` = @{column} AND";
+            }
+
+            where = where.Substring(0, where.Length - 3);
+
+            var setCols = string.Join(", ", tableMetadata.Updates.Select(c => $"`{GetNameSql(c)}`= @{c}"));
+            var sql = string.IsNullOrWhiteSpace(database)
+                ? $"UPDATE `{tableName}` SET {setCols} WHERE {where};"
+                : $"UPDATE `{database}`.`{tableName}` SET {setCols} WHERE {where};";
+            return sql;
+        }
+
         protected virtual string GenerateColumnSql(Column column, bool isPrimary)
         {
             var columnName = GetNameSql(column.Name);
@@ -187,11 +224,6 @@ namespace DotnetSpider.Data.Storage
             }
 
             return dataType;
-        }
-
-        protected virtual string GetNameSql(string name)
-        {
-            return IgnoreCase ? name.ToLowerInvariant() : name;
         }
     }
 }

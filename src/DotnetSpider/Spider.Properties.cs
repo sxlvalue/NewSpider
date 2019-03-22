@@ -4,6 +4,7 @@ using DotnetSpider.Core;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
 using DotnetSpider.MessageQueue;
+using DotnetSpider.RequestSupply;
 using DotnetSpider.Scheduler;
 using DotnetSpider.Statistics;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ namespace DotnetSpider
         private readonly IDownloadService _downloadService;
         private readonly IStatisticsService _statisticsService;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly List<IRequestSupply> _requestSupplies=new List<IRequestSupply>();
         private DateTime _lastRequestedTime;
         private Status _status;
         private IScheduler _scheduler;

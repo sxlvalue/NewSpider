@@ -27,7 +27,7 @@ namespace DotnetSpider.Core
         /// <summary>
         /// MongoDB
         /// </summary>
-        MongoDb,
+        Mongo,
 
         /// <summary>
         /// Cassandra

@@ -24,6 +24,21 @@ namespace DotnetSpider.Data.Storage
         protected const string LongType = "Int64";
         protected const string ByteType = "Byte";
 
+        protected StorageType StorageType;
+
+        protected abstract IDbConnection CreateDbConnection(string connectString);
+
+        protected abstract SqlStatements GenerateSqlStatements(TableMetadata tableMetadata);
+
+        protected abstract void EnsureDatabaseAndTableCreated(IDbConnection conn, SqlStatements sqlStatements);
+        
+        protected RelationalDatabaseEntityStorageBase(StorageType storageType,
+            string connectString = null)
+        {
+            ConnectString = connectString;
+            StorageType = storageType;
+        }
+
         public int RetryTimes { get; set; } = 600;
 
         public string ConnectString { get; }
@@ -38,15 +53,6 @@ namespace DotnetSpider.Data.Storage
         /// </summary>
         public bool IgnoreCase { get; set; } = true;
 
-        protected abstract IDbConnection CreateDbConnection(string connectString);
-
-        protected abstract SqlStatements GenerateSqlStatements(TableMetadata tableMetadata);
-
-        protected RelationalDatabaseEntityStorageBase(string connectString = null)
-        {
-            ConnectString = connectString;
-        }
-
         protected override async Task<DataFlowResult> Store(DataFlowContext context)
         {
             var items = context.GetItems();
@@ -55,25 +61,7 @@ namespace DotnetSpider.Data.Storage
                 return DataFlowResult.Success;
             }
 
-            IDbConnection conn = null;
-            for (int i = 0; i < RetryTimes; ++i)
-            {
-                conn = TryCreateDbConnection(context);
-                if (conn == null)
-                {
-                    Logger?.LogWarning("无有效的数据库连接配置");
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            if (conn == null)
-            {
-                throw new SpiderException(
-                    "无有效的数据库连接配置");
-            }
+            IDbConnection conn = TryCreateDbConnection(context);
 
             using (conn)
             {
@@ -81,23 +69,11 @@ namespace DotnetSpider.Data.Storage
                 {
                     var tableMetadata = (TableMetadata) context[item.Key];
 
-                    // 每天执行一次建表操作, 可以实现每天一个表的操作，或者按周分表可以在运行时创建新表。
-                    var key = tableMetadata.Schema.TablePostfix != TablePostfix.None
-                        ? $"{tableMetadata.TypeName}-{DateTime.Now:yyyyMMdd}"
-                        : tableMetadata.TypeName;
-                    SqlStatements sqlStatements;
+                    SqlStatements sqlStatements = GetSqlStatements(tableMetadata);
+
                     lock (this)
                     {
-                        if (_sqlStatements.ContainsKey(key))
-                        {
-                            sqlStatements = _sqlStatements[key];
-                        }
-                        else
-                        {
-                            sqlStatements = GenerateSqlStatements(tableMetadata);
-                            EnsureDatabaseAndTableCreated(conn, sqlStatements);
-                            _sqlStatements.Add(key, sqlStatements);
-                        }
+                        EnsureDatabaseAndTableCreated(conn, sqlStatements);
                     }
 
                     for (int i = 0; i < RetryTimes; ++i)
@@ -110,8 +86,38 @@ namespace DotnetSpider.Data.Storage
                                 transaction = conn.BeginTransaction();
                             }
 
-                            var list = (List<dynamic>) item.Value ;
-                            await conn.ExecuteAsync(sqlStatements.InsertSql, list);
+                            var list = (List<dynamic>) item.Value;
+                            switch (StorageType)
+                            {
+                                case StorageType.Insert:
+                                {
+                                    await conn.ExecuteAsync(sqlStatements.InsertSql, list);
+                                    break;
+                                }                              
+                                case StorageType.InsertIgnoreDuplicate:
+                                {
+                                    await conn.ExecuteAsync(sqlStatements.InsertIgnoreDuplicateSql, list);
+                                    break;
+                                }
+                                case StorageType.Update:
+                                {
+                                    if (string.IsNullOrWhiteSpace(sqlStatements.UpdateSql))
+                                    {
+                                        throw new SpiderException("未能生成更新 SQL");
+                                    }
+                                    else
+                                    {
+                                        await conn.ExecuteAsync(sqlStatements.UpdateSql, list);
+                                        break;
+                                    }
+                                }
+                                case StorageType.InsertAndUpdate:
+                                {
+                                    await conn.ExecuteAsync(sqlStatements.InsertAndUpdateSql, list);
+                                    break;
+                                }
+                            }
+                           
 
                             transaction?.Commit();
                         }
@@ -138,30 +144,59 @@ namespace DotnetSpider.Data.Storage
             return DataFlowResult.Success;
         }
 
-        protected abstract void EnsureDatabaseAndTableCreated(IDbConnection conn, SqlStatements sqlStatements);
+        protected virtual string GetNameSql(string name)
+        {
+            return IgnoreCase ? name.ToLowerInvariant() : name;
+        }
+        
+        private SqlStatements GetSqlStatements(TableMetadata tableMetadata)
+        {
+            // 每天执行一次建表操作, 可以实现每天一个表的操作，或者按周分表可以在运行时创建新表。
+            var key = tableMetadata.TypeName;
+            if (tableMetadata.Schema.TablePostfix != TablePostfix.None)
+            {
+                key = $"{key}-{DateTime.Now:yyyyMMdd}";
+            }
+
+            lock (this)
+            {
+                if (!_sqlStatements.ContainsKey(key))
+                {
+                    _sqlStatements.Add(key, GenerateSqlStatements(tableMetadata));
+                }
+
+                return _sqlStatements[key];
+            }
+        }
 
         private IDbConnection TryCreateDbConnection(DataFlowContext context)
         {
-            if (!string.IsNullOrWhiteSpace(ConnectString))
+            for (int i = 0; i < RetryTimes; ++i)
             {
-                var conn = TryCreateDbConnection(ConnectString);
-                if (conn != null)
+                if (!string.IsNullOrWhiteSpace(ConnectString))
                 {
-                    return conn;
+                    var conn = TryCreateDbConnection(ConnectString);
+                    if (conn != null)
+                    {
+                        return conn;
+                    }
                 }
+
+                var options = context.Services.GetRequiredService<SpiderOptions>();
+                if (!string.IsNullOrWhiteSpace(options.ConnectionString))
+                {
+                    var conn = TryCreateDbConnection(options.ConnectionString);
+                    if (conn != null)
+                    {
+                        return conn;
+                    }
+                }
+
+                Logger?.LogWarning("无有效的数据库连接配置");
             }
 
-            var options = context.Services.GetRequiredService<SpiderOptions>();
-            if (!string.IsNullOrWhiteSpace(options.ConnectionString))
-            {
-                var conn = TryCreateDbConnection(options.ConnectionString);
-                if (conn != null)
-                {
-                    return conn;
-                }
-            }
-
-            return null;
+            throw new SpiderException(
+                "无有效的数据库连接配置");
         }
 
         private IDbConnection TryCreateDbConnection(string connectionString)

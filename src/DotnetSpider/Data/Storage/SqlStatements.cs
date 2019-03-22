@@ -14,7 +14,7 @@ namespace DotnetSpider.Data.Storage
         /// <summary>
         /// 插入并且忽略重复数据的SQL
         /// </summary>
-        public string InsertAndIgnoreDuplicateSql { get; set; }
+        public string InsertIgnoreDuplicateSql { get; set; }
 
         /// <summary>
         /// 更新的SQL
@@ -29,6 +29,6 @@ namespace DotnetSpider.Data.Storage
         /// <summary>
         /// 插入新的或者更新旧的数据SQL
         /// </summary>
-        public string InsertNewAndUpdateOldSql { get; set; }
+        public string InsertAndUpdateSql { get; set; }
     }
 }

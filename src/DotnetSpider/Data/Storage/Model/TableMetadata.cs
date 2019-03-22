@@ -12,6 +12,8 @@ namespace DotnetSpider.Data.Storage.Model
         public HashSet<string> Primary { get; set; }
 
         public HashSet<IndexMetadata> Indexes { get; }
+        
+        public HashSet<string> Updates { get; set; }
 
         /// <summary>
         /// 属性名，属性数据类型的字典

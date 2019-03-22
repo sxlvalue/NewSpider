@@ -6,9 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
+using DotnetSpider.Data.Storage;
 using DotnetSpider.Downloader;
 using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
+using DotnetSpider.RequestSupply;
 using DotnetSpider.Scheduler;
 using DotnetSpider.Statistics;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,14 +21,13 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        private readonly SpiderOptions _options;
         private readonly IServiceProvider _services;
 
         protected virtual void Initialize()
         {
         }
 
-        protected virtual void NewId()
+        protected void NewId()
         {
             Id = Guid.NewGuid().ToString("N");
         }
@@ -38,7 +39,6 @@ namespace DotnetSpider
             _statisticsService = services.GetRequiredService<IStatisticsService>();
             _mq = services.GetRequiredService<IMessageQueue>();
             _loggerFactory = services.GetRequiredService<ILoggerFactory>();
-            _options = services.GetRequiredService<SpiderOptions>();
             _logger = _loggerFactory.CreateLogger(typeof(Spider).Name);
             Console.CancelKeyPress += ConsoleCancelKeyPress;
         }
@@ -48,6 +48,13 @@ namespace DotnetSpider
             CheckIfRunning();
             dataFlow.Logger = _loggerFactory.CreateLogger(dataFlow.GetType());
             _dataFlows.Add(dataFlow);
+            return this;
+        }
+
+        public Spider AddRequestSupply(IRequestSupply supply)
+        {
+            CheckIfRunning();
+            _requestSupplies.Add(supply);
             return this;
         }
 
@@ -87,17 +94,24 @@ namespace DotnetSpider
         public Task RunAsync(params string[] args)
         {
             CheckIfRunning();
-            Initialize();
-            _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
             return Task.Factory.StartNew(async () =>
             {
                 try
                 {
+                    Initialize();
+                    _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
+
                     _status = Status.Running;
                     // 添加任务启动的监控信息
                     await _statisticsService.StartAsync(Id);
 
+                    foreach (var requestSupply in _requestSupplies)
+                    {
+                        requestSupply.Run(request => AddRequests(request));
+                    }
+
                     EnqueueRequests();
+
 
                     // 分配下载器: 可以通过消息队列(本地模式)或者HTTP接口(配合Portal)分配
                     var allocated = await AllotDownloaderAsync();
@@ -170,6 +184,30 @@ namespace DotnetSpider
             _status = Status.Exiting;
             // 直接取消订阅即可: 1. 如果是本地应用, 
             _mq.Unsubscribe($"{Framework.ResponseHandlerTopic}{Id}");
+        }
+
+        protected StorageBase GetDefaultStorage()
+        {
+            var options = _services.GetRequiredService<SpiderOptions>();
+            switch (options.Storage)
+            {
+                case "MySql":
+                {
+                    return new MySqlEntityStorage(options.StorageType, options.ConnectionString);
+                }
+                case "Mongo":
+                {
+                    return new MongoEntityStorage(options.ConnectionString);
+                }
+                case "Postgre":
+                {
+                    return new PostgreSqlEntityStorage(options.StorageType, options.ConnectionString);
+                }
+                default:
+                {
+                    throw new SpiderException("未能从配置文件解析出正确的存储器");
+                }
+            }
         }
 
         private async Task<bool> AllotDownloaderAsync()

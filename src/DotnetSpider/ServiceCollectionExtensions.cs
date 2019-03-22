@@ -78,6 +78,6 @@ namespace DotnetSpider
             builder.Services.AddSingleton<IStatisticsCenter, StatisticsCenter>();
 
             return builder;
-        }
+        }       
     }
 }
