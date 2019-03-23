@@ -2,6 +2,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Dapper;
+using DotnetSpider.Core;
 using DotnetSpider.Data.Storage.Model;
 using MySql.Data.MySqlClient;
 
@@ -26,9 +27,8 @@ namespace DotnetSpider.Data.Storage
             {
                 InsertSql = GenerateInsertSql(tableMetadata, false),
                 InsertIgnoreDuplicateSql = GenerateInsertSql(tableMetadata, true),
-                // InsertNewAndUpdateOldSql = GenerateInsertNewAndUpdateOldSql(tableMetadata),
+                InsertAndUpdateSql = GenerateInsertAndUpdateSql(tableMetadata),
                 UpdateSql = GenerateUpdateSql(tableMetadata),
-                // SelectSql = GenerateSelectSql(tableMetadata)
                 CreateTableSql = GenerateCreateTableSql(tableMetadata),
                 CreateDatabaseSql = GenerateCreateDatabaseSql(tableMetadata)
             };
@@ -60,14 +60,11 @@ namespace DotnetSpider.Data.Storage
         /// <returns>SQL语句</returns>
         protected virtual string GenerateCreateTableSql(TableMetadata tableMetadata)
         {
-            var tableName = GetNameSql(tableMetadata.Schema.Table);
-            var database = GetNameSql(tableMetadata.Schema.Database);
-
             var isAutoIncrementPrimary = tableMetadata.IsAutoIncrementPrimary;
 
-            var builder = string.IsNullOrWhiteSpace(database)
-                ? new StringBuilder($"CREATE TABLE IF NOT EXISTS `{tableName}` (")
-                : new StringBuilder($"CREATE TABLE IF NOT EXISTS `{database}`.`{tableName}` (");
+            var tableSql = GenerateTableSql(tableMetadata);
+
+            var builder = new StringBuilder($"CREATE TABLE IF NOT EXISTS {tableSql} (");
 
             foreach (var column in tableMetadata.Columns)
             {
@@ -121,12 +118,10 @@ namespace DotnetSpider.Data.Storage
 
             var columnsParamsSql = string.Join(", ", insertColumns.Select(p => $"@{p.Key}"));
 
-            var tableName = GetNameSql(tableMetadata.Schema.Table);
-            var database = GetNameSql(tableMetadata.Schema.Database);
+            var tableSql = GenerateTableSql(tableMetadata);
 
-            var sql = string.IsNullOrWhiteSpace(database)
-                ? $"INSERT {(ignoreDuplicate ? "IGNORE" : "")} INTO `{tableName}` ({columnsSql}) VALUES ({columnsParamsSql});"
-                : $"INSERT {(ignoreDuplicate ? "IGNORE" : "")} INTO `{database}`.`{tableName}` ({columnsSql}) VALUES ({columnsParamsSql});";
+            var sql =
+                $"INSERT {(ignoreDuplicate ? "IGNORE" : "")} INTO {tableSql} ({columnsSql}) VALUES ({columnsParamsSql});";
             return sql;
         }
 
@@ -138,9 +133,6 @@ namespace DotnetSpider.Data.Storage
                 return null;
             }
 
-            var tableName = GetNameSql(tableMetadata.Schema.Table);
-            var database = GetNameSql(tableMetadata.Schema.Database);
-
             var where = "";
             foreach (var column in tableMetadata.Primary)
             {
@@ -150,10 +142,57 @@ namespace DotnetSpider.Data.Storage
             where = where.Substring(0, where.Length - 3);
 
             var setCols = string.Join(", ", tableMetadata.Updates.Select(c => $"`{GetNameSql(c)}`= @{c}"));
-            var sql = string.IsNullOrWhiteSpace(database)
-                ? $"UPDATE `{tableName}` SET {setCols} WHERE {where};"
-                : $"UPDATE `{database}`.`{tableName}` SET {setCols} WHERE {where};";
+            var tableSql = GenerateTableSql(tableMetadata);
+            var sql = $"UPDATE {tableSql} SET {setCols} WHERE {where};";
             return sql;
+        }
+
+        protected virtual string GenerateInsertAndUpdateSql(TableMetadata tableMetadata)
+        {
+            // insert into table (player_id,award_type,num)  values(20001,0,1) on  DUPLICATE key update num=num+values(num)
+            
+            var columns = tableMetadata.Columns;
+            var isAutoIncrementPrimary = tableMetadata.IsAutoIncrementPrimary;
+            // 去掉自增主键
+            var insertColumns =
+                (isAutoIncrementPrimary ? columns.Where(c1 => c1.Key != tableMetadata.Primary.First()) : columns)
+                .ToArray();
+
+            var columnsSql = string.Join(", ", insertColumns.Select(c => $"`{GetNameSql(c.Key)}`"));
+
+            var columnsParamsSql = string.Join(", ", insertColumns.Select(p => $"@{p.Key}"));
+
+            var tableSql = GenerateTableSql(tableMetadata);
+            var setCols = string.Join(", ", tableMetadata.Updates.Select(c => $"`{GetNameSql(c)}`= @{c}"));
+            var sql =
+                $"INSERT INTO {tableSql} ({columnsSql}) VALUES ({columnsParamsSql}) ON DUPLICATE key UPDATE {setCols};";
+            return sql;
+        }
+        protected virtual string GenerateExistSql(TableMetadata tableMetadata)
+        {
+            if (tableMetadata.Primary == null || tableMetadata.Primary.Count == 0)
+            {
+                throw new SpiderException("必须以主键为查询条件");
+            }
+
+            var where = "";
+            foreach (var column in tableMetadata.Primary)
+            {
+                where += $" `{GetNameSql(column)}` = @{column} AND";
+            }
+
+            where = where.Substring(0, where.Length - 3);
+
+            var primarySql = string.Join(", ", tableMetadata.Primary.Select(x => $"`{x}`"));
+            var tableSql = GenerateTableSql(tableMetadata);
+            return $"SELECT {primarySql}, COUNT(*) > 0 AS `EXISTS` FROM {tableSql} WHERE {where}";
+        }
+
+        protected virtual string GenerateTableSql(TableMetadata tableMetadata)
+        {
+            var tableName = GetNameSql(tableMetadata.Schema.Table);
+            var database = GetNameSql(tableMetadata.Schema.Database);
+            return string.IsNullOrWhiteSpace(database) ? $"`{tableName}`" : $"`{database}`.`{tableName}`";
         }
 
         protected virtual string GenerateColumnSql(Column column, bool isPrimary)

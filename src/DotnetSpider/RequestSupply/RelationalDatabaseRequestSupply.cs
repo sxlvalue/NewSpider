@@ -78,9 +78,9 @@ namespace DotnetSpider.RequestSupply
                         var url = string.Format(format, arguments);
                         var request = new Request
                         {
-                            Url = url,
-                            Properties = data
+                            Url = url
                         };
+                        request.AddProperty(dic);
                         FormatRequest(request);
                         enqueueAction(request);
                     }

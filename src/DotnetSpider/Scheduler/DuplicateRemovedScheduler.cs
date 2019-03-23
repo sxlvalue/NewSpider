@@ -52,6 +52,10 @@ namespace DotnetSpider.Scheduler
             return count;
         }
 
+        /// <summary>
+        /// TODO: 
+        /// </summary>
+        /// <param name="request"></param>
         protected virtual void ComputeHash(Request request)
         {
             var content = $"{request.OwnerId}{request.Url}{request.Method}{request.Body}";

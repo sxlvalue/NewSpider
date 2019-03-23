@@ -11,7 +11,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// <summary>
 		/// A composite format string.
 		/// </summary>
-		public string Format { get; set; }
+		public string FormatStr { get; set; }
 
 		/// <summary>
 		/// 实现数值的转化
@@ -20,7 +20,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// <returns>被格式化后的数值</returns>
 		protected override string FormatValue(string value)
 		{
-			return string.Format(Format, value);
+			return string.Format(FormatStr, value);
 		}
 
 		/// <summary>
@@ -28,7 +28,7 @@ namespace DotnetSpider.Data.Parser.Formatter
 		/// </summary>
 		protected override void CheckArguments()
 		{
-			if (string.IsNullOrWhiteSpace(Format))
+			if (string.IsNullOrWhiteSpace(FormatStr))
 			{
 				throw new ArgumentException("FormatString should not be null or empty");
 			}

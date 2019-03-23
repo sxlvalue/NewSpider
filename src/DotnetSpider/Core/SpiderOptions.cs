@@ -18,6 +18,17 @@ namespace DotnetSpider.Core
 
         public bool Distribute => "true" == _configuration["Distribute"];
 
+        public string EmailHost => _configuration["EmailHost"];
+
+        public string EmailAccount => _configuration["EmailAccount"];
+
+        public string EmailPassword => _configuration["EmailPassword"];
+
+        public string EmailDisplayName => _configuration["EmailDisplayName"];
+
+        public string EmailPort => _configuration["EmailPort"];
+
+
         public SpiderOptions(IConfiguration configuration)
         {
             _configuration = configuration;

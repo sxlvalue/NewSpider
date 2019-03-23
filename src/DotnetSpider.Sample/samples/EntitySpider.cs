@@ -44,15 +44,9 @@ namespace DotnetSpider.Sample.samples
             Depth = 3;
             DownloaderType = DownloaderType.Default;
             AddDataFlow(new DataParser<BaiduSearchEntry>()).AddDataFlow(GetDefaultStorage());
-            AddRequests(new Request
-            {
-                Url = "https://news.cnblogs.com/n/page/1/",
-                Properties = new Dictionary<string, string> {{"网站", "博客园"}}
-            }, new Request
-            {
-                Url = "https://news.cnblogs.com/n/page/2/",
-                Properties = new Dictionary<string, string> {{"网站", "博客园"}}
-            });
+            AddRequests(
+                new Request("https://news.cnblogs.com/n/page/1/", new Dictionary<string, string> {{"网站", "博客园"}}),
+                new Request("https://news.cnblogs.com/n/page/2/", new Dictionary<string, string> {{"网站", "博客园"}}));
         }
 
         [Schema("cnblogs", "cnblogs_entity_model")]

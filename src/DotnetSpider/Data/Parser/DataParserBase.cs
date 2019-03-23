@@ -66,11 +66,10 @@ namespace DotnetSpider.Data.Parser
         protected virtual Request CreateFromRequest(Request source, string url)
         {
             // TODO: 确认需要复制哪些字段
-            var request = new Request {Url = url, Depth = source.Depth, Body = source.Body, Method = source.Method};
+            var request = new Request(url,source.Properties) {Url = url, Depth = source.Depth, Body = source.Body, Method = source.Method};
             request.AgentId = source.AgentId;
             request.RetriedTimes = 0;
             request.OwnerId = source.OwnerId;
-            request.Properties = source.Properties;
             return request;
         }
 

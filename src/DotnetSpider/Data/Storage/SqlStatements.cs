@@ -22,11 +22,6 @@ namespace DotnetSpider.Data.Storage
         public string UpdateSql { get; set; }
 
         /// <summary>
-        /// 查询的SQL
-        /// </summary>
-        public string SelectSql;
-
-        /// <summary>
         /// 插入新的或者更新旧的数据SQL
         /// </summary>
         public string InsertAndUpdateSql { get; set; }
