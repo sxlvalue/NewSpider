@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using DotnetSpider.Sample.samples;
 
 namespace DotnetSpider.Sample
 {
@@ -16,6 +17,8 @@ namespace DotnetSpider.Sample
             acc.Flush();
             var a = acc.ReadByte(0);
             // Startup.Run("-s", "CnblogsSpider", "-n", "博客园全站采集");
+
+            NvshensSpider.Run();
             Console.Read();
         }
     }
