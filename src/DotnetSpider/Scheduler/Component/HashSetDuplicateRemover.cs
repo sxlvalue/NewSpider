@@ -30,6 +30,8 @@ namespace DotnetSpider.Scheduler.Component
             return isDuplicate;
         }
 
+        public int Total => _hashes.Count;
+
         /// <summary>
         /// Reset duplicate check.
         /// </summary>

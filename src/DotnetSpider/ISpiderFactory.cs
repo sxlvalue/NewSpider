@@ -9,5 +9,6 @@ namespace DotnetSpider
         T Create<T>() where T : Spider;
         Spider Create(Type type);
         SpiderOptions GetOptions();
+        IServiceProvider CreateScope();
     }
 }

@@ -49,15 +49,6 @@ namespace DotnetSpider.Downloader
                 "application/x-www-form-urlencoded"
             };
 
-        public virtual Task InitAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public virtual void AddCookies(params Cookie[] cookies)
-        {
-        }
-
         public IHttpProxyPool HttpProxyPool { get; set; }
 
         protected abstract Task<Response> ImplDownloadAsync(Request request);
@@ -131,6 +122,10 @@ namespace DotnetSpider.Downloader
             response.Request.AgentId = AgentId;
             response.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
             return response;
+        }
+        
+        public virtual void AddCookies(params Cookie[] cookies)
+        {
         }
     }
 }

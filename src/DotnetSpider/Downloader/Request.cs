@@ -175,5 +175,12 @@ namespace DotnetSpider.Downloader
         {
             return (Request) MemberwiseClone();
         }
+
+        public virtual void ComputeHash()
+        {
+            // TODO:
+            var content = $"{OwnerId}{Url}{Method}{Body}";
+            Hash = content.ToMd5();
+        }
     }
 }

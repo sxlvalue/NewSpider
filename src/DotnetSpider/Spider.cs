@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -16,6 +18,8 @@ using DotnetSpider.Statistics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+
+[assembly: InternalsVisibleTo("DotnetSpider.Tests")]
 
 namespace DotnetSpider
 {
@@ -98,25 +102,30 @@ namespace DotnetSpider
             {
                 try
                 {
+                    // 初始化设置
                     Initialize();
+
                     _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
 
                     _status = Status.Running;
+
                     // 添加任务启动的监控信息
                     await _statisticsService.StartAsync(Id);
 
+                    // 通过供应接口添加请求
                     foreach (var requestSupply in _requestSupplies)
                     {
                         requestSupply.Run(request => AddRequests(request));
                     }
 
+                    // 把列表中可能剩余的请求加入队列
                     EnqueueRequests();
-
 
                     // 分配下载器: 可以通过消息队列(本地模式)或者HTTP接口(配合Portal)分配
                     var allocated = await AllotDownloaderAsync();
                     if (!allocated)
                     {
+                        _logger.LogError($"任务 {Id} 分配下载器失败");
                         return;
                     }
 
@@ -134,7 +143,6 @@ namespace DotnetSpider
 
                     // 启动速度控制器
                     StartSpeedControllerAsync().ConfigureAwait(false).GetAwaiter();
-
 
                     _lastRequestedTime = DateTime.Now;
 
@@ -275,6 +283,7 @@ namespace DotnetSpider
                             }
                             case DataFlowResult.Failed:
                             {
+                                _logger.LogError($"任务 {Id} 数据流处理器 {dataFlow.GetType().Name} 失败");
                                 success = false;
                                 break;
                             }
@@ -286,20 +295,33 @@ namespace DotnetSpider
                     }
 
                     // 解析的目标请求
-                    var targetRequests = context.GetTargetRequests();
-                    if (targetRequests != null && targetRequests.Count > 0)
+                    var followRequests = context.GetTargetRequests();
+                    var resultItems = context.GetItems();
+                    // 如果解析结果为空，重试
+                    if ((resultItems == null || resultItems.Sum(x => x.Value == null ? 0 : x.Value.Count) == 0) &&
+                        RetryWhenResultIsEmpty)
                     {
-                        var validTargetRequest = new List<Request>();
-                        foreach (var targetRequest in targetRequests)
+                        if (followRequests == null)
                         {
-                            targetRequest.Depth = response.Request.Depth + 1;
-                            if (targetRequest.Depth <= Depth)
+                            followRequests = new List<Request>();
+                        }
+
+                        followRequests.Add(response.Request);
+                    }
+
+                    if (followRequests != null && followRequests.Count > 0)
+                    {
+                        var request = new List<Request>();
+                        foreach (var followRequest in followRequests)
+                        {
+                            followRequest.Depth = response.Request.Depth + 1;
+                            if (followRequest.Depth <= Depth)
                             {
-                                validTargetRequest.Add(targetRequest);
+                                request.Add(followRequest);
                             }
                         }
 
-                        var count = _scheduler.Enqueue(validTargetRequest);
+                        var count = _scheduler.Enqueue(request);
                         if (count > 0)
                         {
                             await _statisticsService.IncrementTotalAsync(Id, count);
@@ -346,7 +368,28 @@ namespace DotnetSpider
             _scheduler.Enqueue(retryResponses.Select(x => x.Request));
         }
 
-        private async Task WaitForExit()
+        /// <summary>
+        /// 发送退出信号
+        /// </summary>
+        internal void ExitBySignal()
+        {
+            if (MmfSignal)
+            {
+                var mmf = MemoryMappedFile.CreateFromFile(Id, FileMode.OpenOrCreate, null, 4,
+                    MemoryMappedFileAccess.ReadWrite);
+                using (var accessor = mmf.CreateViewAccessor())
+                {
+                    accessor.Write(0, true);
+                    accessor.Flush();
+                }
+            }
+            else
+            {
+                throw new SpiderException("未开启 MMF 控制");
+            }
+        }
+
+        internal async Task WaitForExit()
         {
             int waited = 0;
             while (!(_status == Status.Exited || _status == Status.Exiting))
@@ -373,43 +416,61 @@ namespace DotnetSpider
                 _logger.LogInformation($"任务 {Id} 速度控制器启动");
                 bool @break = false;
 
-                while (!@break)
+
+                MemoryMappedFile mmf = MmfSignal
+                    ? MemoryMappedFile.CreateFromFile(Id, FileMode.OpenOrCreate, null, 4,
+                        MemoryMappedFileAccess.ReadWrite)
+                    : null;
+
+                using (var accessor = mmf?.CreateViewAccessor())
                 {
-                    Thread.Sleep(_speedControllerInterval);
+                    accessor?.Write(0, false);
+                    accessor?.Flush();
 
-                    switch (_status)
+                    while (!@break)
                     {
-                        case Status.Running:
+                        Thread.Sleep(_speedControllerInterval);
+
+                        switch (_status)
                         {
-                            try
+                            case Status.Running:
                             {
-                                var requests = _scheduler.Dequeue(Id, _dequeueBatchCount);
-                                foreach (var request in requests)
+                                try
                                 {
-                                    OnDownloading?.Invoke(request);
+                                    var requests = _scheduler.Dequeue(Id, _dequeueBatchCount);
+                                    foreach (var request in requests)
+                                    {
+                                        OnDownloading?.Invoke(request);
+                                    }
+
+                                    if (requests.Length > 0)
+                                    {
+                                        await _downloadService.EnqueueRequests(Id, requests);
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    _logger.LogError($"速度控制器运转失败: {e}");
                                 }
 
-                                if (requests.Length > 0)
-                                {
-                                    await _downloadService.EnqueueRequests(Id, requests);
-                                }
+                                break;
                             }
-                            catch (Exception e)
+                            case Status.Paused:
                             {
-                                _logger.LogError($"速度控制器运转失败: {e}");
+                                _logger.LogInformation($"任务 {Id} 速度控制器暂停");
+                                break;
                             }
+                            case Status.Exiting:
+                            case Status.Exited:
+                            {
+                                @break = true;
+                                break;
+                            }
+                        }
 
-                            break;
-                        }
-                        case Status.Paused:
+                        if (accessor != null && accessor.ReadBoolean(0))
                         {
-                            _logger.LogInformation($"任务 {Id} 速度控制器暂停");
-                            break;
-                        }
-                        case Status.Exiting:
-                        case Status.Exited:
-                        {
-                            @break = true;
+                            Exit();
                             break;
                         }
                     }
@@ -442,6 +503,8 @@ namespace DotnetSpider
         private void EnqueueRequests()
         {
             if (_requests.Count <= 0) return;
+
+            _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
 
             var count = _scheduler.Enqueue(_requests);
             _statisticsService.IncrementTotalAsync(Id, count).ConfigureAwait(false);

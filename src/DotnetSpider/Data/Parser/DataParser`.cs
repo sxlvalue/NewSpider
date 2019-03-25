@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Selector;
@@ -11,20 +12,20 @@ namespace DotnetSpider.Data.Parser
 {
     public class DataParser<T> : DataParser where T : EntityBase<T>, new()
     {
-        private readonly Model<T> _model;
-        private readonly TableMetadata _tableMetadata;
+        internal readonly Model<T> Model;
+        internal readonly TableMetadata TableMetadata;
 
         public DataParser()
         {
-            _model = new Model<T>();
-            _tableMetadata = new T().GetTableMetadata();
+            Model = new Model<T>();
+            TableMetadata = new T().GetTableMetadata();
         }
 
         protected override Task<DataFlowResult> Parse(DataFlowContext context)
         {
-            if (!context.Contains(_model.TypeName))
+            if (!context.Contains(Model.TypeName))
             {
-                context.Add(_model.TypeName, _tableMetadata);
+                context.Add(Model.TypeName, TableMetadata);
             }
 
             var selectable = context.GetSelectable();
@@ -40,9 +41,9 @@ namespace DotnetSpider.Data.Parser
                 environments.Add(property.Key, property.Value);
             }
 
-            if (_model.ShareValueSelectors != null)
+            if (Model.ShareValueSelectors != null)
             {
-                foreach (var selector in _model.ShareValueSelectors)
+                foreach (var selector in Model.ShareValueSelectors)
                 {
                     string name = selector.Name;
                     var value = selectable.Select(selector.ToSelector()).GetValue();
@@ -57,20 +58,20 @@ namespace DotnetSpider.Data.Parser
                 }
             }
 
-            bool singleExtractor = _model.Selector == null;
+            bool singleExtractor = Model.Selector == null;
 
             if (!singleExtractor)
             {
-                var selector = _model.Selector.ToSelector();
+                var selector = Model.Selector.ToSelector();
 
                 var list = selectable.SelectList(selector).Nodes()?.ToList();
                 if (list != null)
                 {
-                    if (_model.Take > 0 && list.Count > _model.Take)
+                    if (Model.Take > 0 && list.Count > Model.Take)
                     {
-                        list = _model.TakeFromHead
-                            ? list.Take(_model.Take).ToList()
-                            : list.Skip(list.Count - _model.Take).ToList();
+                        list = Model.TakeFromHead
+                            ? list.Take(Model.Take).ToList()
+                            : list.Skip(list.Count - Model.Take).ToList();
                     }
 
                     for (var i = 0; i < list.Count; ++i)
@@ -83,7 +84,7 @@ namespace DotnetSpider.Data.Parser
                         }
                         else
                         {
-                            Logger?.LogWarning($"解析到空数据，类型: {_model.TypeName}");
+                            Logger?.LogWarning($"解析到空数据，类型: {Model.TypeName}");
                         }
                     }
                 }
@@ -97,16 +98,16 @@ namespace DotnetSpider.Data.Parser
                 }
                 else
                 {
-                    Logger?.LogWarning($"解析到空数据，类型: {_model.TypeName}");
+                    Logger?.LogWarning($"解析到空数据，类型: {Model.TypeName}");
                 }
             }
 
             if (results.Count > 0)
             {
-                var items = context.GetItem(_model.TypeName);
+                var items = context.GetItem(Model.TypeName);
                 if (items == null)
                 {
-                    context.AddItem(_model.TypeName, results);
+                    context.AddItem(Model.TypeName, results);
                 }
                 else
                 {
@@ -122,32 +123,50 @@ namespace DotnetSpider.Data.Parser
         {
             var dataObject = new T();
 
-            foreach (var field in _model.ValueSelectors)
+            foreach (var field in Model.ValueSelectors)
             {
+#if DEBUG
+                if (field.PropertyInfo.Name == "Url")
+                {
+                    
+                }
+#endif
+
                 string value = null;
                 if (field.Type == SelectorType.Enviroment)
                 {
-                    if (field.Expression == "INDEX")
+                    switch (field.Expression)
                     {
-                        value = index.ToString();
-                    }
-                    else if (field.Expression == "GUID")
-                    {
-                        value = Guid.NewGuid().ToString();
-                    }
-                    else if (field.Expression == "DATE")
-                    {
-                        value = DateTime.Now.Date.ToString("yyyy-MM-dd");
-                    }
-                    else if (field.Expression == "DATETIME")
-                    {
-                        value = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
-                    }
-                    else
-                    {
-                        if (environments.ContainsKey(field.Expression))
+                        case "INDEX":
                         {
-                            value = environments[field.Expression];
+                            value = index.ToString();
+                            break;
+                        }
+                        case "GUID":
+                        {
+                            value = Guid.NewGuid().ToString();
+                            break;
+                        }
+                        case "DATE":
+                        case "TODAY":
+                        {
+                            value = DateTime.Now.Date.ToString("yyyy-MM-dd");
+                            break;
+                        }
+                        case "DATETIME":
+                        case "NOW":
+                        {
+                            value = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+                            break;
+                        }
+                        default:
+                        {
+                            if (environments.ContainsKey(field.Expression))
+                            {
+                                value = environments[field.Expression];
+                            }
+
+                            break;
                         }
                     }
                 }
@@ -181,7 +200,8 @@ namespace DotnetSpider.Data.Parser
                     }
                 }
 
-                var newValue = Convert.ChangeType(value, field.PropertyInfo.PropertyType);
+
+                var newValue = value == null ? null : Convert.ChangeType(value, field.PropertyInfo.PropertyType);
                 if (newValue == null && field.NotNull)
                 {
                     dataObject = null;

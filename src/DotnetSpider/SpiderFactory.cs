@@ -40,5 +40,10 @@ namespace DotnetSpider
         {
             return _serviceProvider.GetRequiredService<SpiderOptions>();
         }
+
+        public IServiceProvider CreateScope()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider;
+        }
     }
 }

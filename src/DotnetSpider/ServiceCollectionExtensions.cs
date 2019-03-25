@@ -23,7 +23,7 @@ namespace DotnetSpider
             SpiderBuilder builder = new SpiderBuilder(services);
             configureBuilder?.Invoke(builder);
             services.AddSingleton(provider => builder.Build());
-            
+
             services.AddScoped<SpiderOptions>();
             // Add all storage
             services.AddSingleton<MongoEntityStorage>();
@@ -50,13 +50,14 @@ namespace DotnetSpider
                     .MinimumLevel.Verbose()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                     .Enrich.FromLogContext()
-                    .WriteTo.Console().WriteTo.RollingFile("dotnet-spider.log");
+                    .WriteTo.Console().WriteTo
+                    .RollingFile("dotnet-spider.log");
             }
 
             Log.Logger = configuration.CreateLogger();
 
             return builder;
-        }       
+        }
 
         /// <summary>
         /// 单机模式
@@ -78,6 +79,6 @@ namespace DotnetSpider
             builder.Services.AddSingleton<IStatisticsCenter, StatisticsCenter>();
 
             return builder;
-        }       
+        }
     }
 }

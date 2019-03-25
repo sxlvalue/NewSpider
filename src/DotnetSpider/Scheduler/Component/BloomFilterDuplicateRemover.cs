@@ -18,7 +18,7 @@ namespace DotnetSpider.Scheduler.Component
 		/// Get TotalRequestsCount.
 		/// </summary>
 		/// <returns>TotalRequestsCount</returns>
-		public long TotalRequestsCount => _counter.Value;
+		public int Total => _counter.Value;
 
 		/// <summary>
 		/// 构造方法

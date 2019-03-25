@@ -155,7 +155,7 @@ namespace DotnetSpider.Downloader
                     downloaderEntry = new DownloaderEntry
                     {
                         LastUsedTime = DateTime.Now,
-                        Downloader = new DefaultDownloader
+                        Downloader = new TestDownloader
                         {
                             Logger = Logger,
                             AgentId = _agentId

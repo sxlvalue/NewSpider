@@ -12,6 +12,8 @@ namespace DotnetSpider.Scheduler.Component
         /// <returns>Whether the request is duplicate.</returns>
         bool IsDuplicate(Request request);
         
+        int Total { get; }
+        
         /// <summary>
         /// Reset duplicate check.
         /// </summary>

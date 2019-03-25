@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
 
@@ -30,7 +31,8 @@ namespace DotnetSpider.Scheduler
             _requests[request.OwnerId].Add(request);
         }
 
-        public override Request[] Dequeue(string ownerId, int count)
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public override Request[] Dequeue(string ownerId, int count = 1)
         {
             Check.NotNull(ownerId, nameof(ownerId));
             if (!_requests.ContainsKey(ownerId))

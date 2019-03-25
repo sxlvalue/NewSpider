@@ -34,9 +34,12 @@ namespace DotnetSpider
         private int _speedControllerInterval = 1000;
         private int _dequeueBatchCount = 1;
         private int _depth = int.MaxValue;
+        private string _id;
+        private bool _retryWhenResultIsEmpty;
+        private bool _mmfSignal;
 
         public event Action<Request> OnDownloading;
-        
+
         public DownloaderOptions DownloaderOptions { get; set; } = new DownloaderOptions();
 
         /// <summary>
@@ -58,12 +61,48 @@ namespace DotnetSpider
             }
         }
 
+        /// <summary>
+        /// 是否支持通过 MMF 操作爬虫
+        /// </summary>
+        public bool MmfSignal
+        {
+            get => _mmfSignal;
+            set
+            {
+                CheckIfRunning();
+                _mmfSignal = value;
+            }
+        }
+
+        /// <summary>
+        /// 如果结析结果为空, 重试。默认值为 否。
+        /// </summary>
+        public bool RetryWhenResultIsEmpty
+        {
+            get => _retryWhenResultIsEmpty;
+            set
+            {
+                CheckIfRunning();
+                _retryWhenResultIsEmpty = value;
+            }
+        }
+
+        /// <summary>
+        /// 爬虫运行状态
+        /// </summary>
+        public Status Status => _status;
+
         public IScheduler Scheduler
         {
             get => _scheduler;
             set
             {
                 CheckIfRunning();
+                if (_scheduler.Total > 0)
+                {
+                    throw new SpiderException("当调度器不为空时，不能更换调度器");
+                }
+
                 _scheduler = value;
             }
         }
@@ -129,7 +168,26 @@ namespace DotnetSpider
         /// <summary>
         /// 任务的唯一标识
         /// </summary>
-        public string Id { get; set; }
+        public string Id
+        {
+            get => _id;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ArgumentException("任务标识不能为空");
+                }
+
+                if (value.Length > 100)
+                {
+                    throw new ArgumentException("任务标识长度不能超过 100");
+                }
+
+                CheckIfRunning();
+
+                _id = value;
+            }
+        }
 
         /// <summary>
         /// 任务名称
@@ -165,9 +223,9 @@ namespace DotnetSpider
                     throw new SpiderException($"等待结束时间必需大于速度控制器间隔: {_speedControllerInterval}");
                 }
 
-                if (value < 30)
+                if (value < 0)
                 {
-                    throw new SpiderException("等待结束时间必需大于 30 (秒)");
+                    throw new SpiderException("等待结束时间必需大于 0 (秒)");
                 }
 
                 CheckIfRunning();

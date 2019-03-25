@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
 
@@ -7,9 +8,9 @@ namespace DotnetSpider.Scheduler
 {
     public class QueueDistinctDfsScheduler : DuplicateRemovedScheduler
     {
-        private readonly ConcurrentDictionary<string, List<Request>> _requests =
+        internal readonly ConcurrentDictionary<string, List<Request>> Requests =
             new ConcurrentDictionary<string, List<Request>>();
-        
+
         public override void ResetDuplicateCheck()
         {
             DuplicateRemover.ResetDuplicateCheck();
@@ -17,43 +18,44 @@ namespace DotnetSpider.Scheduler
 
         protected override void PushWhenNoDuplicate(Request request)
         {
-            if (!_requests.ContainsKey(request.OwnerId))
+            if (!Requests.ContainsKey(request.OwnerId))
             {
-                _requests.TryAdd(request.OwnerId, new List<Request>());
+                Requests.TryAdd(request.OwnerId, new List<Request>());
             }
 
-            _requests[request.OwnerId].Add(request);
+            Requests[request.OwnerId].Add(request);
         }
 
-        public override Request[] Dequeue(string ownerId, int count)
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public override Request[] Dequeue(string ownerId, int count = 1)
         {
             Check.NotNull(ownerId, nameof(ownerId));
-            if (!_requests.ContainsKey(ownerId))
+            if (!Requests.ContainsKey(ownerId))
             {
                 return new Request[0];
             }
 
             var dequeueCount = count;
             int start;
-            if (_requests[ownerId].Count < count)
+            if (Requests[ownerId].Count < count)
             {
-                dequeueCount = _requests[ownerId].Count;
+                dequeueCount = Requests[ownerId].Count;
                 start = 0;
             }
             else
             {
-                start = _requests[ownerId].Count - dequeueCount - 1;
+                start = Requests[ownerId].Count - dequeueCount;
             }
 
             var requests = new List<Request>();
-            for (int i = _requests.Count - 1; i >= start; --i)
+            for (int i = Requests.Count; i >= start; --i)
             {
-                requests.Add(_requests[ownerId][i]);
+                requests.Add(Requests[ownerId][i]);
             }
 
             if (dequeueCount > 0)
             {
-                _requests[ownerId].RemoveRange(start, dequeueCount);
+                Requests[ownerId].RemoveRange(start, dequeueCount);
             }
 
             return requests.ToArray();

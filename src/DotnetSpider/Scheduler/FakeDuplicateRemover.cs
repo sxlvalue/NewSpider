@@ -16,6 +16,8 @@ namespace DotnetSpider.Scheduler
             return false;
         }
 
+        public int Total => 0;
+
         public void ResetDuplicateCheck()
         {
         }

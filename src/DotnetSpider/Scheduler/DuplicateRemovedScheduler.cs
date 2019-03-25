@@ -32,8 +32,10 @@ namespace DotnetSpider.Scheduler
         /// </summary>
         protected IDuplicateRemover DuplicateRemover { get; set; } = new HashSetDuplicateRemover();
 
+        public int Total => DuplicateRemover.Total;
+
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public abstract Request[] Dequeue(string ownerId, int count);
+        public abstract Request[] Dequeue(string ownerId, int count = 1);
 
         [MethodImpl(MethodImplOptions.Synchronized)]
         public int Enqueue(IEnumerable<Request> requests)
@@ -41,7 +43,7 @@ namespace DotnetSpider.Scheduler
             int count = 0;
             foreach (var request in requests)
             {
-                ComputeHash(request);
+                request.ComputeHash();
                 if (!DuplicateRemover.IsDuplicate(request))
                 {
                     PushWhenNoDuplicate(request);
@@ -50,16 +52,6 @@ namespace DotnetSpider.Scheduler
             }
 
             return count;
-        }
-
-        /// <summary>
-        /// TODO: 
-        /// </summary>
-        /// <param name="request"></param>
-        protected virtual void ComputeHash(Request request)
-        {
-            var content = $"{request.OwnerId}{request.Url}{request.Method}{request.Body}";
-            request.Hash = content.ToMd5();
         }
     }
 }
