@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading;
+using DotnetSpider.Core;
 using DotnetSpider.Downloader;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -161,6 +163,30 @@ namespace DotnetSpider.Tests
         [Fact(DisplayName = "RetryDownloadTimes")]
         public void RetryDownloadTimes()
         {
+            var downloadTimes = 20;
+            var errorTimes = 0;
+            var hasException = false;
+            TestDownloader downloader = new TestDownloader();
+            Request request = new Request("http://www.devfans.com/test");
+
+            for (int i = 0; i < downloadTimes; i++)
+            {
+                try
+                {
+                    var response = downloader.DownloadAsync(request).Result;
+                    if (!response.Success)
+                    {
+                        errorTimes += 1;
+                    }
+                }
+                catch (SpiderException e)
+                {
+                    hasException = true;
+                    errorTimes += 1;
+                }
+            }
+            
+            Assert.True((errorTimes == downloadTimes) && hasException);
         }
 
         /// <summary>
