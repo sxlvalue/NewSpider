@@ -14,6 +14,26 @@ namespace DotnetSpider.Tests
 {
     public partial class DataParserTests
     {
+        /// <summary>
+        /// TODO: 检测在实体类上面添加 FollowSelector 是否生效
+        /// </summary>
+        [Fact(DisplayName = "FollowSelector")]
+        public void FollowSelector()
+        {
+        }
+
+        /// <summary>
+        /// TODO： 检测环境变量查询是否正确
+        /// 1. Request 中的 Properties 可以查询
+        /// 2. 特殊类型如 当天时间、元素索引、当天日期、当月等
+        /// </summary>
+        public void EnvironmentSelector()
+        {                     
+        }
+
+        /// <summary>
+        /// 测试实体类的解析是否正确
+        /// </summary>
         [Fact(DisplayName = "ParseEntity")]
         public void ParseEntity()
         {
@@ -58,6 +78,9 @@ namespace DotnetSpider.Tests
 </div>
 ";
 
+        /// <summary>
+        /// 测试页面与数据对象 1:1 解析是否正确
+        /// </summary>
         [Fact(DisplayName = "SingleEntitySelector")]
         public void SingleEntitySelector()
         {
@@ -80,6 +103,9 @@ namespace DotnetSpider.Tests
             Assert.Equal("i am dotnetspider", results[0].dotnetspider);
         }
 
+        /// <summary>
+        /// 测试页面与数据对象 1:n 解析是否正确
+        /// </summary>
         [Fact(DisplayName = "MultiEntitySelector")]
         public void MultiEntitySelector()
         {
@@ -95,7 +121,7 @@ namespace DotnetSpider.Tests
 
             parser.HandleAsync(dataContext).GetAwaiter().GetResult();
 
-            var results = ((List<object>) dataContext.GetItem(typeof(E).FullName)).Select(x=>(E)x).ToList();
+            var results = ((List<object>) dataContext.GetItem(typeof(E).FullName)).Select(x => (E) x).ToList();
 
             Assert.Equal("a", results[0].title);
             Assert.Equal("b", results[1].title);

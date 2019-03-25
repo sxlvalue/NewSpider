@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Selector;
@@ -19,6 +18,17 @@ namespace DotnetSpider.Data.Parser
         {
             Model = new Model<T>();
             TableMetadata = new T().GetTableMetadata();
+            var followXpaths = new HashSet<string>();
+            foreach (var followSelector in Model.FollowSelectors)
+            {
+                foreach (var xPath in followSelector.XPaths)
+                {
+                    followXpaths.Add(xPath);
+                }
+            }
+
+            var xpaths = followXpaths.ToArray();
+            Follow = context => XpathFollow(xpaths).Invoke(context);
         }
 
         protected override Task<DataFlowResult> Parse(DataFlowContext context)
@@ -128,7 +138,6 @@ namespace DotnetSpider.Data.Parser
 #if DEBUG
                 if (field.PropertyInfo.Name == "Url")
                 {
-                    
                 }
 #endif
 

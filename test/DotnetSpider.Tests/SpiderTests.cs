@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Threading;
 using DotnetSpider.Downloader;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +30,7 @@ namespace DotnetSpider.Tests
             spider.Speed = 1; // 设置采集速度, 表示每秒下载多少个请求, 大于 1 时越大速度越快, 小于 1 时越小越慢, 不能为0.
             spider.Depth = 3; // 设置采集深度
             spider.DownloaderOptions.Type = DownloaderType.HttpClient; // 使用普通下载器, 无关 Cookie, 干净的 HttpClient 
-  
+
             for (int i = 0; i < 10000; i++)
             {
                 spider.AddRequests(new Request(url + i) {Encoding = "UTF-8"});
@@ -83,7 +79,7 @@ namespace DotnetSpider.Tests
             spider.Speed = 1; // 设置采集速度, 表示每秒下载多少个请求, 大于 1 时越大速度越快, 小于 1 时越小越慢, 不能为0.
             spider.Depth = 3; // 设置采集深度
             spider.DownloaderOptions.Type = DownloaderType.HttpClient; // 使用普通下载器, 无关 Cookie, 干净的 HttpClient 
- 
+
             for (int i = 0; i < 10000; i++)
             {
                 spider.AddRequests(new Request(url + i) {Encoding = "UTF-8"});
@@ -112,7 +108,6 @@ namespace DotnetSpider.Tests
             Assert.Equal(Status.Exited, spider.Status);
         }
 
-
         [Fact(DisplayName = "CloseSignal")]
         public void CloseSignal()
         {
@@ -135,7 +130,7 @@ namespace DotnetSpider.Tests
             spider.Speed = 1; // 设置采集速度, 表示每秒下载多少个请求, 大于 1 时越大速度越快, 小于 1 时越小越慢, 不能为0.
             spider.Depth = 3; // 设置采集深度
             spider.DownloaderOptions.Type = DownloaderType.HttpClient; // 使用普通下载器, 无关 Cookie, 干净的 HttpClient 
-  
+
             for (int i = 0; i < 10000; i++)
             {
                 spider.AddRequests(new Request(url + i) {Encoding = "UTF-8"});
@@ -158,6 +153,41 @@ namespace DotnetSpider.Tests
             }
 
             Assert.Equal(Status.Exited, spider.Status);
+        }
+
+        /// <summary>
+        /// //TODO: 配置使用 TestDownloader, 一直抛错，检测到达指定尝试次数是否不再重试。
+        /// </summary>
+        [Fact(DisplayName = "RetryDownloadTimes")]
+        public void RetryDownloadTimes()
+        {
+        }
+
+        /// <summary>
+        /// TODO: 当所有 DataFlow 走完的时候，如果没有任何结析结果，RetryWhenResultIsEmpty 为 True 时会把当前 Requst 添加回队列再次重试
+        /// </summary>
+        [Fact(DisplayName = "RetryWhenResultIsEmpty")]
+        public void RetryWhenResultIsEmpty()
+        {
+        }
+        
+        /// <summary>
+        /// TODO: 检测 Spider._speedControllerInterval 的值是否设置正确
+        /// 当 Spider.Speed 设置的值 n 大于 1 时，表示每秒下载 n 个链接，因此 speed interval 设置为 1 秒， 每秒从 scheduler 中取出 n 个链接，分发到各下载器去下载。
+        /// 当 Spider.Speed 设置的值 n 大于 0 小于 1 时， 表示每秒下载个数要小于 1，因此不能用 1 秒做间隔， 而应该用 1/n
+        /// Spider.Speed 的值必须大于 1
+        /// </summary>
+        [Fact(DisplayName = "SpeedInterval")]
+        public void SpeedInterval()
+        {
+        }
+        
+        /// <summary>
+        /// TODO: 设置 Depth 为 2，使用全站采集，检测目标链接深度大于 2 的是否为入队
+        /// </summary>
+        [Fact(DisplayName = "Depth")]
+        public void Depth()
+        {
         }
     }
 }

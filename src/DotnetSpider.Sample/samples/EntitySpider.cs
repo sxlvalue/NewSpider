@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using DotnetSpider.Core;
 using DotnetSpider.Data.Parser;
 using DotnetSpider.Data.Parser.Attribute;
 using DotnetSpider.Data.Parser.Formatter;
-using DotnetSpider.Data.Storage;
 using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Downloader;
-using DotnetSpider.RequestSupply;
 using DotnetSpider.Scheduler;
 using DotnetSpider.Selector;
 using Microsoft.Extensions.DependencyInjection;

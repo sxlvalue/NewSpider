@@ -107,7 +107,7 @@ namespace DotnetSpider
 
                     _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
 
-                    _status = Status.Running;
+                    Status = Status.Running;
 
                     // 添加任务启动的监控信息
                     await _statisticsService.StartAsync(Id);
@@ -170,7 +170,7 @@ namespace DotnetSpider
                     await _statisticsService.ExitAsync(Id);
 
                     await _statisticsService.PrintStatisticsAsync(Id);
-                    _status = Status.Exited;
+                    Status = Status.Exited;
                     _logger.LogInformation($"任务 {Id} 退出");
                 }
             });
@@ -178,18 +178,18 @@ namespace DotnetSpider
 
         public void Pause()
         {
-            _status = Status.Paused;
+            Status = Status.Paused;
         }
 
         public void Continue()
         {
-            _status = Status.Running;
+            Status = Status.Running;
         }
 
         public void Exit()
         {
             _logger.LogInformation("退出中...");
-            _status = Status.Exiting;
+            Status = Status.Exiting;
             // 直接取消订阅即可: 1. 如果是本地应用, 
             _mq.Unsubscribe($"{Framework.ResponseHandlerTopic}{Id}");
         }
@@ -392,7 +392,7 @@ namespace DotnetSpider
         internal async Task WaitForExit()
         {
             int waited = 0;
-            while (!(_status == Status.Exited || _status == Status.Exiting))
+            while (!(Status == Status.Exited || Status == Status.Exiting))
             {
                 if ((DateTime.Now - _lastRequestedTime).Seconds > EmptySleepTime)
                 {
@@ -431,7 +431,7 @@ namespace DotnetSpider
                     {
                         Thread.Sleep(_speedControllerInterval);
 
-                        switch (_status)
+                        switch (Status)
                         {
                             case Status.Running:
                             {
@@ -485,7 +485,7 @@ namespace DotnetSpider
         /// </summary>
         private void CheckIfRunning()
         {
-            if (_status == Status.Running)
+            if (Status == Status.Running)
             {
                 throw new SpiderException("爬虫正在运行");
             }
@@ -494,7 +494,7 @@ namespace DotnetSpider
         private void ConsoleCancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             Exit();
-            while (_status != Status.Exited)
+            while (Status != Status.Exited)
             {
                 Thread.Sleep(500);
             }

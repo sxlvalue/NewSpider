@@ -19,27 +19,27 @@ namespace DotnetSpider.Data.Parser
         /// <summary>
         /// 从最终解析到的结果中取前 Take 个实体
         /// </summary>
-        public int Take { get; protected set; }
+        public int Take { get; }
 
         /// <summary>
         /// 设置 Take 的方向, 默认是从头部取
         /// </summary>
-        public bool TakeFromHead { get; protected set; }
+        public bool TakeFromHead { get; }
 
         /// <summary>
         /// 爬虫实体定义的数据库列信息
         /// </summary>
-        public HashSet<ValueSelector> ValueSelectors { get; protected set; }
+        public HashSet<ValueSelector> ValueSelectors { get; }
 
         /// <summary>
         /// 目标链接的选择器
         /// </summary>
-        public HashSet<FollowSelector> FollowSelectors { get; protected set; }
+        public HashSet<FollowSelector> FollowSelectors { get; }
 
         /// <summary>
         /// 共享值的选择器
         /// </summary>
-        public HashSet<ValueSelector> ShareValueSelectors { get; protected set; }
+        public HashSet<ValueSelector> ShareValueSelectors { get; }
 
         public Model()
         {

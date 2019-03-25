@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Net.Http;
 using DotnetSpider.Core;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 
 namespace DotnetSpider.Downloader
 {

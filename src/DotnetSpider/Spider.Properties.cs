@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
 using DotnetSpider.Downloader;
-using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
 using DotnetSpider.RequestSupply;
 using DotnetSpider.Scheduler;
@@ -25,7 +24,6 @@ namespace DotnetSpider
         private readonly List<IRequestSupply> _requestSupplies = new List<IRequestSupply>();
 
         private DateTime _lastRequestedTime;
-        private Status _status;
         private IScheduler _scheduler;
         private int _emptySleepTime = 30;
         private int _retryDownloadTimes = 5;
@@ -90,7 +88,7 @@ namespace DotnetSpider
         /// <summary>
         /// 爬虫运行状态
         /// </summary>
-        public Status Status => _status;
+        public Status Status { get; private set; }
 
         public IScheduler Scheduler
         {

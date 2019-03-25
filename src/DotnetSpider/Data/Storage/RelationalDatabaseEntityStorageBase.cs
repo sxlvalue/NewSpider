@@ -24,7 +24,7 @@ namespace DotnetSpider.Data.Storage
         protected const string LongType = "Int64";
         protected const string ByteType = "Byte";
 
-        protected StorageType StorageType;
+        protected readonly StorageType StorageType;
 
         protected abstract IDbConnection CreateDbConnection(string connectString);
 

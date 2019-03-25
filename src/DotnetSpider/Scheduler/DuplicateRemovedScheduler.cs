@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using DotnetSpider.Core;
 using DotnetSpider.Downloader;
 using DotnetSpider.Scheduler.Component;
 

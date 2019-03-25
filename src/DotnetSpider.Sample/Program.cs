@@ -1,10 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Net;
-using System.Net.Http;
-using DotnetSpider.Core;
-using DotnetSpider.Sample.samples;
 
 namespace DotnetSpider.Sample
 {
