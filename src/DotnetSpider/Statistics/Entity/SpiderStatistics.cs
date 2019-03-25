@@ -36,9 +36,9 @@ namespace DotnetSpider.Statistics.Entity
             _success.Inc();
         }
 
-        internal void IncFailed()
+        internal void AddFailed(int count = 1)
         {
-            _failed.Inc();
+            _failed.Add(count);
         }
 
         internal void AddTotal(int count)

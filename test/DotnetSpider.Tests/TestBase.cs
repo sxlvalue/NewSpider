@@ -14,6 +14,7 @@ namespace DotnetSpider.Tests
                 builder.UseConfiguration();
                 builder.UseSerilog();
                 builder.UseStandalone();
+                builder.UseDefaultDownloaderAllocator();
             });
             SpiderFactory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
         }

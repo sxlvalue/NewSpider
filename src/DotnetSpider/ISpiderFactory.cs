@@ -1,5 +1,6 @@
 using System;
 using DotnetSpider.Core;
+using DotnetSpider.Statistics;
 
 namespace DotnetSpider
 {
@@ -10,5 +11,6 @@ namespace DotnetSpider
         Spider Create(Type type);
         SpiderOptions GetOptions();
         IServiceProvider CreateScope();
+        IStatisticsStore GetStatisticsStore();
     }
 }

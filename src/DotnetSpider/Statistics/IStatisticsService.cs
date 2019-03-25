@@ -6,10 +6,10 @@ namespace DotnetSpider.Statistics
     {
         Task IncrementSuccessAsync(string ownerId);
 
-        Task IncrementFailedAsync(string ownerId);
+        Task IncrementFailedAsync(string ownerId, int count = 1);
 
         Task IncrementTotalAsync(string ownerId, int count);
-        
+
         Task StartAsync(string ownerId);
 
         Task ExitAsync(string ownerId);

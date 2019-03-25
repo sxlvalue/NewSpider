@@ -80,5 +80,14 @@ namespace DotnetSpider
 
             return builder;
         }
+
+        public static SpiderBuilder UseDefaultDownloaderAllocator(this SpiderBuilder builder)
+        {
+            Check.NotNull(builder, nameof(builder));
+
+            builder.Services.AddSingleton<IDownloaderAllocator, DownloaderAllocator>();
+
+            return builder;
+        }
     }
 }

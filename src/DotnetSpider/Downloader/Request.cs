@@ -173,10 +173,13 @@ namespace DotnetSpider.Downloader
             return (Request) MemberwiseClone();
         }
 
+        /// <summary>
+        /// Hash 放在客户端计算的原因是调度器可能是分布式的。不能随意去调整服务端的代码。
+        /// </summary>
         public virtual void ComputeHash()
         {
             // TODO:
-            var content = $"{OwnerId}{Url}{Method}{Body}";
+            var content = $"{OwnerId}{Url}{Method}{Body}{RetriedTimes}{Cookie}";
             Hash = content.ToMd5();
         }
     }

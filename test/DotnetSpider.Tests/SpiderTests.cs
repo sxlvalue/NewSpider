@@ -3,12 +3,13 @@ using System.Globalization;
 using System.Threading;
 using DotnetSpider.Core;
 using DotnetSpider.Downloader;
+using DotnetSpider.Scheduler;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace DotnetSpider.Tests
 {
-    public partial class SpiderTests
+    public partial class SpiderTests : TestBase
     {
         [Fact(DisplayName = "RunAsyncAndStop")]
         public void RunAsyncAndStop()
@@ -17,15 +18,7 @@ namespace DotnetSpider.Tests
                 ? "https://www.google.com/"
                 : "http://www.baidu.com/";
 
-            var services = new ServiceCollection();
-            services.AddDotnetSpider(builder =>
-            {
-                builder.UseConfiguration();
-                builder.UseSerilog();
-                builder.UseStandalone();
-            });
-            var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
-            var spider = factory.Create<Spider>();
+            var spider = SpiderFactory.Create<Spider>();
 
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
             spider.Name = "RunAsyncAndStop"; // 设置任务名称
@@ -66,15 +59,7 @@ namespace DotnetSpider.Tests
                 ? "https://www.google.com/"
                 : "http://www.baidu.com/";
 
-            var services = new ServiceCollection();
-            services.AddDotnetSpider(builder =>
-            {
-                builder.UseConfiguration();
-                builder.UseSerilog();
-                builder.UseStandalone();
-            });
-            var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
-            var spider = factory.Create<Spider>();
+            var spider = SpiderFactory.Create<Spider>();
 
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
             spider.Name = "RunAsyncAndStop"; // 设置任务名称
@@ -117,15 +102,7 @@ namespace DotnetSpider.Tests
                 ? "https://www.google.com/"
                 : "http://www.baidu.com/";
 
-            var services = new ServiceCollection();
-            services.AddDotnetSpider(builder =>
-            {
-                builder.UseConfiguration();
-                builder.UseSerilog();
-                builder.UseStandalone();
-            });
-            var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
-            var spider = factory.Create<Spider>();
+            var spider = SpiderFactory.Create<Spider>();
             spider.MmfSignal = true;
             spider.Id = Guid.NewGuid().ToString("N"); // 设置任务标识
             spider.Name = "RunAsyncAndStop"; // 设置任务名称
@@ -163,30 +140,27 @@ namespace DotnetSpider.Tests
         [Fact(DisplayName = "RetryDownloadTimes")]
         public void RetryDownloadTimes()
         {
-            var downloadTimes = 20;
-            var errorTimes = 0;
-            var hasException = false;
-            TestDownloader downloader = new TestDownloader();
-            Request request = new Request("http://www.devfans.com/test");
+            var spider = SpiderFactory.Create<Spider>();
+            spider.Id = Guid.NewGuid().ToString("N");
+            spider.Name = "RetryDownloadTimes";
+            spider.Speed = 1;
+            spider.Depth = 3;
+            spider.EmptySleepTime = 30;
+            spider.RetryDownloadTimes = 5;
+            spider.DownloaderOptions.Type = DownloaderType.Exception;
+            spider.Scheduler=new QueueDistinctBfsScheduler();
+            spider.AddRequests("http://www.baidu.com");
+            spider.RunAsync().Wait(); // 启动
 
-            for (int i = 0; i < downloadTimes; i++)
-            {
-                try
-                {
-                    var response = downloader.DownloadAsync(request).Result;
-                    if (!response.Success)
-                    {
-                        errorTimes += 1;
-                    }
-                }
-                catch (SpiderException e)
-                {
-                    hasException = true;
-                    errorTimes += 1;
-                }
-            }
-            
-            Assert.True((errorTimes == downloadTimes) && hasException);
+            var statisticsStore = SpiderFactory.GetStatisticsStore();
+            var s = statisticsStore.GetSpiderStatisticsAsync(spider.Id).Result;
+            Assert.Equal(6, s.Total);
+            Assert.Equal(6, s.Failed);
+            Assert.Equal(0, s.Success);
+
+            var ds = statisticsStore.GetDownloadStatisticsListAsync(1, 10).Result[0];
+            Assert.Equal(6, ds.Failed);
+            Assert.Equal(0, ds.Success);
         }
 
         /// <summary>
@@ -196,7 +170,7 @@ namespace DotnetSpider.Tests
         public void RetryWhenResultIsEmpty()
         {
         }
-        
+
         /// <summary>
         /// TODO: 检测 Spider._speedControllerInterval 的值是否设置正确
         /// 当 Spider.Speed 设置的值 n 大于 1 时，表示每秒下载 n 个链接，因此 speed interval 设置为 1 秒， 每秒从 scheduler 中取出 n 个链接，分发到各下载器去下载。
@@ -207,7 +181,7 @@ namespace DotnetSpider.Tests
         public void SpeedInterval()
         {
         }
-        
+
         /// <summary>
         /// TODO: 设置 Depth 为 2，使用全站采集，检测目标链接深度大于 2 的是否为入队
         /// </summary>

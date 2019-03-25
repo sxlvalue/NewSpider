@@ -8,7 +8,7 @@ namespace DotnetSpider.Statistics
     {
         Task IncrementSuccessAsync(string ownerId);
 
-        Task IncrementFailedAsync(string ownerId);
+        Task IncrementFailedAsync(string ownerId, int count = 1);
 
         Task StartAsync(string ownerId);
 
@@ -17,15 +17,15 @@ namespace DotnetSpider.Statistics
         Task IncrementDownloadSuccessAsync(string agentId, int count, long elapsedMilliseconds);
 
         Task IncrementDownloadFailedAsync(string agentId, int count);
-        
+
         Task<List<DownloadStatistics>> GetDownloadStatisticsListAsync(int page, int size);
 
-        Task<DownloadStatistics> GetDownloadStatisticsAsync(string agentId);      
+        Task<DownloadStatistics> GetDownloadStatisticsAsync(string agentId);
 
         Task<SpiderStatistics> GetSpiderStatisticsAsync(string ownerId);
-        
-        Task<List<DownloadStatistics>> GetSpiderStatisticsListAsync(int page, int size);
-        
+
+        Task<List<SpiderStatistics>> GetSpiderStatisticsListAsync(int page, int size);
+
         Task IncrementTotalAsync(string ownerId, int count);
     }
 }

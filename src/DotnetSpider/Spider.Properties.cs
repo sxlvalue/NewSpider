@@ -13,7 +13,7 @@ namespace DotnetSpider
 {
     public partial class Spider
     {
-        private readonly IList<Request> _requests = new List<Request>();
+        private readonly List<Request> _requests = new List<Request>();
 
         private readonly List<IDataFlow> _dataFlows = new List<IDataFlow>();
         private readonly IMessageQueue _mq;
@@ -96,7 +96,7 @@ namespace DotnetSpider
             set
             {
                 CheckIfRunning();
-                if (_scheduler.Total > 0)
+                if (_scheduler != null && _scheduler.Total > 0)
                 {
                     throw new SpiderException("当调度器不为空时，不能更换调度器");
                 }
@@ -216,7 +216,7 @@ namespace DotnetSpider
             get => _emptySleepTime;
             set
             {
-                if (value <= _speedControllerInterval)
+                if (value < _speedControllerInterval / 1000)
                 {
                     throw new SpiderException($"等待结束时间必需大于速度控制器间隔: {_speedControllerInterval}");
                 }

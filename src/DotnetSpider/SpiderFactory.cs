@@ -1,6 +1,7 @@
 using System;
 using DotnetSpider.Core;
 using DotnetSpider.Data;
+using DotnetSpider.Statistics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DotnetSpider
@@ -44,6 +45,11 @@ namespace DotnetSpider
         public IServiceProvider CreateScope()
         {
             return _serviceProvider.CreateScope().ServiceProvider;
+        }
+
+        public IStatisticsStore GetStatisticsStore()
+        {
+            return _serviceProvider.GetRequiredService<IStatisticsStore>();
         }
     }
 }

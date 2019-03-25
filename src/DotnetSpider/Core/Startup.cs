@@ -64,7 +64,7 @@ namespace DotnetSpider.Core
                 {
                     builder.UseStandalone();
                 }
-
+                builder.UseDefaultDownloaderAllocator();
                 builder.RegisterSpider(spiderType);
             });
             var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();

@@ -27,6 +27,7 @@ namespace DotnetSpider.Sample.samples
                 builder.UseConfiguration();
                 builder.UseSerilog();
                 builder.UseStandalone();
+                builder.UseDefaultDownloaderAllocator();
             });
             var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();
             var options = factory.GetOptions();

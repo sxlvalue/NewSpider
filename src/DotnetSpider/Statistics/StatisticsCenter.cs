@@ -50,8 +50,8 @@ namespace DotnetSpider.Statistics
                     }
                     case "Failed":
                     {
-                        var ownerId = commandMessage.Message;
-                        await _statisticsStore.IncrementFailedAsync(ownerId);
+                        var data = commandMessage.Message.Split(',');
+                        await _statisticsStore.IncrementFailedAsync(data[0], int.Parse(data[1]));
                         break;
                     }
                     case "Start":

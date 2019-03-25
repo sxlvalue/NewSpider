@@ -18,9 +18,9 @@ namespace DotnetSpider.Statistics
             await _mq.PublishAsync(Framework.StatisticsServiceTopic, $"Success|{ownerId}");
         }
 
-        public async Task IncrementFailedAsync(string ownerId)
+        public async Task IncrementFailedAsync(string ownerId, int count = 1)
         {
-            await _mq.PublishAsync(Framework.StatisticsServiceTopic, $"Failed|{ownerId}");
+            await _mq.PublishAsync(Framework.StatisticsServiceTopic, $"Failed|{ownerId},{count}");
         }
 
         public async Task StartAsync(string ownerId)

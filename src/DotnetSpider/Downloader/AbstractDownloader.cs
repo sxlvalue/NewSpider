@@ -82,6 +82,7 @@ namespace DotnetSpider.Downloader
                 Logger?.LogError($"任务 {request.OwnerId} 文件名无法解析 {request.Url}");
                 return;
             }
+
             if (!File.Exists(filePath))
             {
                 try
@@ -108,19 +109,34 @@ namespace DotnetSpider.Downloader
                 Logger?.LogInformation($"任务 {request.OwnerId} 文件 {request.Url} 已经存在");
             }
         }
-        
+
         public async Task<Response> DownloadAsync(Request request)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var response = await ImplDownloadAsync(request);
+            Response response;
+            try
+            {
+                response = await ImplDownloadAsync(request);
+            }
+            catch (Exception e)
+            {
+                response = new Response
+                {
+                    AgentId = AgentId,
+                    Request = request,
+                    Exception = e.Message,
+                };
+            }
+
             stopwatch.Stop();
+
             response.AgentId = AgentId;
             response.Request.AgentId = AgentId;
             response.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
             return response;
         }
-        
+
         public virtual void AddCookies(params Cookie[] cookies)
         {
         }

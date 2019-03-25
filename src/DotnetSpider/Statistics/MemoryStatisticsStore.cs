@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DotnetSpider.Statistics.Entity;
 
@@ -36,14 +37,14 @@ namespace DotnetSpider.Statistics
             return Task.CompletedTask;
         }
 
-        public Task IncrementFailedAsync(string ownerId)
+        public Task IncrementFailedAsync(string ownerId, int count = 1)
         {
             if (!_spiderStatisticsDict.ContainsKey(ownerId))
             {
                 _spiderStatisticsDict.TryAdd(ownerId, new SpiderStatistics());
             }
 
-            _spiderStatisticsDict[ownerId].IncFailed();
+            _spiderStatisticsDict[ownerId].AddFailed(count);
             return Task.CompletedTask;
         }
 
@@ -94,7 +95,7 @@ namespace DotnetSpider.Statistics
 
         public Task<List<DownloadStatistics>> GetDownloadStatisticsListAsync(int page, int size)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(_downloadStatisticsDict.Values.ToList());
         }
 
         public Task<DownloadStatistics> GetDownloadStatisticsAsync(string agentId)
@@ -119,9 +120,9 @@ namespace DotnetSpider.Statistics
             return Task.FromResult(statistics);
         }
 
-        public Task<List<DownloadStatistics>> GetSpiderStatisticsListAsync(int page, int size)
+        public Task<List<SpiderStatistics>> GetSpiderStatisticsListAsync(int page, int size)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(_spiderStatisticsDict.Values.ToList());
         }
     }
 }

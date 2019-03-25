@@ -9,16 +9,17 @@ namespace DotnetSpider.Downloader
     public class TestDownloader : AbstractDownloader
     {
         private static readonly HttpClient HttpClient = new HttpClient();
-         private static readonly int ThrowExceptionInterval = 10;
+        private static readonly int _throwExceptionInterval = 8;
 
         private long _downloadTimes;
+
 
         protected override async Task<Response> ImplDownloadAsync(Request request)
         {
             try
             {
                 _downloadTimes++;
-                if (_downloadTimes % ThrowExceptionInterval == 0)
+                if (_downloadTimes % _throwExceptionInterval == 0)
                 {
                     throw new SpiderException("这是一个测试异常，请忽略");
                 }

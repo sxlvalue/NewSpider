@@ -22,6 +22,7 @@ namespace DotnetSpider.Sample.samples
                 builder.UseConfiguration();
                 builder.UseSerilog();
                 builder.UseStandalone();
+                builder.UseDefaultDownloaderAllocator();
                 builder.RegisterSpider(typeof(EntitySpider));
             });
             var factory = services.BuildServiceProvider().GetRequiredService<ISpiderFactory>();

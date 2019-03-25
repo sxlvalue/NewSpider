@@ -13,6 +13,13 @@ using Newtonsoft.Json;
 
 namespace DotnetSpider.Downloader
 {
+    public class DownloaderEntry
+    {
+        public IDownloader Downloader { get; set; }
+
+        public DateTime LastUsedTime { get; set; }
+    }
+
     internal abstract class AbstractDownloaderAgent : IDownloaderAgent
     {
         private bool _isRunning;
@@ -20,7 +27,7 @@ namespace DotnetSpider.Downloader
         private readonly IMessageQueue _mq;
         private readonly string _agentId;
         private readonly string _name;
-        private readonly SpiderOptions _options;
+        private readonly IDownloaderAllocator _downloaderAllocator;
 
         private readonly ConcurrentDictionary<string, DownloaderEntry> _cache =
             new ConcurrentDictionary<string, DownloaderEntry>();
@@ -31,18 +38,19 @@ namespace DotnetSpider.Downloader
 
         protected AbstractDownloaderAgent(string agentId,
             string name,
-            IMessageQueue mq, SpiderOptions options, ILoggerFactory loggerFactory)
+            IMessageQueue mq, SpiderOptions options, IDownloaderAllocator downloaderAllocator,
+            ILoggerFactory loggerFactory)
         {
             Check.NotNull(agentId, nameof(agentId));
             Check.NotNull(name, nameof(name));
             _agentId = agentId;
             _name = name;
             _mq = mq;
-            _options = options;
+            _downloaderAllocator = downloaderAllocator;
             Logger = loggerFactory.CreateLogger(GetType().FullName);
-            if (!string.IsNullOrEmpty(_options.ProxySupplyUrl))
+            if (!string.IsNullOrEmpty(options.ProxySupplyUrl))
             {
-                _httpProxyPool = new HttpProxyPool(new HttpRowTextProxySupplier(_options.ProxySupplyUrl));
+                _httpProxyPool = new HttpProxyPool(new HttpRowTextProxySupplier(options.ProxySupplyUrl));
             }
         }
 
@@ -130,72 +138,24 @@ namespace DotnetSpider.Downloader
             return Task.CompletedTask;
         }
 
-        protected virtual Task<DownloaderEntry> CreateDownloaderEntry(
+        protected virtual async Task<DownloaderEntry> CreateDownloaderEntry(
             AllotDownloaderMessage allotDownloaderMessage)
         {
-            DownloaderEntry downloaderEntry = null;
-            // TODO: 添加其它下载器的分配方法
-            switch (allotDownloaderMessage.Type)
+            var downloaderEntry =await _downloaderAllocator.CreateDownloaderEntryAsync(allotDownloaderMessage);
+            if (downloaderEntry == null)
             {
-                case DownloaderType.Empty:
-                {
-                    downloaderEntry = new DownloaderEntry
-                    {
-                        LastUsedTime = DateTime.Now,
-                        Downloader = new EmptyDownloader
-                        {
-                            Logger = Logger,
-                            AgentId = _agentId
-                        }
-                    };
-                    break;
-                }
-                case DownloaderType.Default:
-                {
-                    downloaderEntry = new DownloaderEntry
-                    {
-                        LastUsedTime = DateTime.Now,
-                        Downloader = new TestDownloader
-                        {
-                            Logger = Logger,
-                            AgentId = _agentId
-                        }
-                    };
-                    break;
-                }
-                case DownloaderType.WebDriver:
-                {
-                    throw new NotImplementedException();
-                }
-                case DownloaderType.HttpClient:
-                {
-                    var httpClient = new HttpClientDownloader
-                    {
-                        Logger = Logger,
-                        AgentId = _agentId,
-                        UseProxy = allotDownloaderMessage.UseProxy,
-                        AllowAutoRedirect = allotDownloaderMessage.AllowAutoRedirect,
-                        Timeout = allotDownloaderMessage.Timeout,
-                        DecodeHtml = allotDownloaderMessage.DecodeHtml,
-                        UseCookies = allotDownloaderMessage.UseCookies
-                    };
-                    httpClient.AddCookies(allotDownloaderMessage.Cookies);
-                    downloaderEntry = new DownloaderEntry
-                    {
-                        LastUsedTime = DateTime.Now,
-                        Downloader = httpClient
-                    };
-
-                    break;
-                }
+                return null;
             }
 
-            if (downloaderEntry != null && _httpProxyPool != null)
+            downloaderEntry.Downloader.Logger = Logger;
+            downloaderEntry.Downloader.AgentId = _agentId;
+            
+            if (  _httpProxyPool != null)
             {
                 downloaderEntry.Downloader.HttpProxyPool = _httpProxyPool;
             }
 
-            return Task.FromResult(downloaderEntry);
+            return downloaderEntry;
         }
 
         private Task HeartbeatAsync(CancellationToken cancellationToken)
@@ -321,12 +281,5 @@ namespace DotnetSpider.Downloader
                 Logger.LogWarning($"任务 {allotDownloaderMessage.OwnerId} 重复分配下载器");
             }
         }
-    }
-
-    class DownloaderEntry
-    {
-        public IDownloader Downloader { get; set; }
-
-        public DateTime LastUsedTime { get; set; }
     }
 }

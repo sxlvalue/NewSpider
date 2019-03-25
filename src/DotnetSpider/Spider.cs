@@ -294,34 +294,33 @@ namespace DotnetSpider
                         }
                     }
 
-                    // 解析的目标请求
-                    var followRequests = context.GetTargetRequests();
+
                     var resultItems = context.GetItems();
                     // 如果解析结果为空，重试
                     if ((resultItems == null || resultItems.Sum(x => x.Value == null ? 0 : x.Value.Count) == 0) &&
                         RetryWhenResultIsEmpty)
                     {
-                        if (followRequests == null)
-                        {
-                            followRequests = new List<Request>();
-                        }
-
-                        followRequests.Add(response.Request);
+                        response.Request.RetriedTimes++;
+                        response.Request.ComputeHash();
+                        // 不需要添加总计
+                        _scheduler.Enqueue(new[] {response.Request.Clone()});
                     }
 
+                    // 解析的目标请求
+                    var followRequests = context.GetTargetRequests();
                     if (followRequests != null && followRequests.Count > 0)
                     {
-                        var request = new List<Request>();
+                        var requests = new List<Request>();
                         foreach (var followRequest in followRequests)
                         {
                             followRequest.Depth = response.Request.Depth + 1;
                             if (followRequest.Depth <= Depth)
                             {
-                                request.Add(followRequest);
+                                requests.Add(followRequest);
                             }
                         }
 
-                        var count = _scheduler.Enqueue(request);
+                        var count = _scheduler.Enqueue(requests);
                         if (count > 0)
                         {
                             await _statisticsService.IncrementTotalAsync(Id, count);
@@ -357,15 +356,20 @@ namespace DotnetSpider
             });
 
             var failedRequests =
-                responses.Where(x => !x.Success && x.Request.RetriedTimes >= RetryDownloadTimes)
+                responses.Where(x => !x.Success)
                     .ToList();
             // 统计下载失败
             if (failedRequests.Count > 0)
             {
+                await _statisticsService.IncrementFailedAsync(Id);
                 await _statisticsService.IncrementDownloadFailedAsync(agentId, failedRequests.Count);
             }
 
-            _scheduler.Enqueue(retryResponses.Select(x => x.Request));
+            var retryCount = _scheduler.Enqueue(retryResponses.Select(x => x.Request.Clone()));
+            if (retryCount > 0)
+            {
+                await _statisticsService.IncrementTotalAsync(Id, retryCount);
+            }
         }
 
         /// <summary>
@@ -505,7 +509,6 @@ namespace DotnetSpider
             if (_requests.Count <= 0) return;
 
             _scheduler = _scheduler ?? new QueueDistinctBfsScheduler();
-
             var count = _scheduler.Enqueue(_requests);
             _statisticsService.IncrementTotalAsync(Id, count).ConfigureAwait(false);
             _logger.LogInformation($"任务 {Id} 请求推送到调度器: {_requests.Count}");
