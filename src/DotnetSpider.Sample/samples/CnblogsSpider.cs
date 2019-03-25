@@ -19,7 +19,7 @@ namespace DotnetSpider.Sample.samples
             Scheduler = new QueueDistinctBfsScheduler();
             Speed = 1;
             Depth = 3;
-            DownloaderType = DownloaderType.Default;
+            DownloaderOptions.Type = DownloaderType.HttpClient;
             AddDataFlow(new CnblogsDataParser()).AddDataFlow(new JsonFileStorage());
             AddRequests("http://www.cnblogs.com/");
         }

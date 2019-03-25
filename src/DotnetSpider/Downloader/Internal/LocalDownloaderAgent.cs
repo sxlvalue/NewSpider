@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using DotnetSpider.Core;
 using DotnetSpider.Downloader.Entity;
 using DotnetSpider.MessageQueue;
 using Microsoft.Extensions.Logging;
@@ -8,8 +9,9 @@ namespace DotnetSpider.Downloader.Internal
 {
     internal class LocalDownloaderAgent : AbstractDownloaderAgent
     {
-        public LocalDownloaderAgent(IMessageQueue mq, ILoggerFactory loggerFactory) : base(Guid.NewGuid().ToString("N"),
-            "LocalDownloaderAgent", mq, loggerFactory)
+        public LocalDownloaderAgent(IMessageQueue mq, SpiderOptions options, ILoggerFactory loggerFactory) : base(
+            Guid.NewGuid().ToString("N"),
+            "LocalDownloaderAgent", mq, options, loggerFactory)
         {
         }
 

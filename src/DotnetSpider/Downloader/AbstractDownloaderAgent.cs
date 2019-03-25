@@ -20,20 +20,30 @@ namespace DotnetSpider.Downloader
         private readonly IMessageQueue _mq;
         private readonly string _agentId;
         private readonly string _name;
+        private readonly SpiderOptions _options;
 
         private readonly ConcurrentDictionary<string, DownloaderEntry> _cache =
             new ConcurrentDictionary<string, DownloaderEntry>();
 
+        private readonly HttpProxyPool _httpProxyPool;
+
         protected ILogger Logger { get; }
 
-        protected AbstractDownloaderAgent(string agentId, string name, IMessageQueue mq, ILoggerFactory loggerFactory)
+        protected AbstractDownloaderAgent(string agentId,
+            string name,
+            IMessageQueue mq, SpiderOptions options, ILoggerFactory loggerFactory)
         {
             Check.NotNull(agentId, nameof(agentId));
             Check.NotNull(name, nameof(name));
             _agentId = agentId;
             _name = name;
             _mq = mq;
+            _options = options;
             Logger = loggerFactory.CreateLogger(GetType().FullName);
+            if (!string.IsNullOrEmpty(_options.ProxySupplyUrl))
+            {
+                _httpProxyPool = new HttpProxyPool(new HttpRowTextProxySupplier(_options.ProxySupplyUrl));
+            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -46,6 +56,7 @@ namespace DotnetSpider.Downloader
             Logger.LogInformation("本地下载代理启动");
 
             _isRunning = true;
+
 
             // 注册节点
             var json = JsonConvert.SerializeObject(new DownloaderAgent
@@ -119,7 +130,8 @@ namespace DotnetSpider.Downloader
             return Task.CompletedTask;
         }
 
-        protected virtual Task<DownloaderEntry> CreateDownloaderEntry(AllotDownloaderMessage allotDownloaderMessage)
+        protected virtual Task<DownloaderEntry> CreateDownloaderEntry(
+            AllotDownloaderMessage allotDownloaderMessage)
         {
             DownloaderEntry downloaderEntry = null;
             // TODO: 添加其它下载器的分配方法
@@ -157,8 +169,30 @@ namespace DotnetSpider.Downloader
                 }
                 case DownloaderType.HttpClient:
                 {
-                    throw new NotImplementedException();
+                    var httpClient = new HttpClientDownloader
+                    {
+                        Logger = Logger,
+                        AgentId = _agentId,
+                        UseProxy = allotDownloaderMessage.UseProxy,
+                        AllowAutoRedirect = allotDownloaderMessage.AllowAutoRedirect,
+                        Timeout = allotDownloaderMessage.Timeout,
+                        DecodeHtml = allotDownloaderMessage.DecodeHtml,
+                        UseCookies = allotDownloaderMessage.UseCookies
+                    };
+                    httpClient.AddCookies(allotDownloaderMessage.Cookies);
+                    downloaderEntry = new DownloaderEntry
+                    {
+                        LastUsedTime = DateTime.Now,
+                        Downloader = httpClient
+                    };
+
+                    break;
                 }
+            }
+
+            if (downloaderEntry != null && _httpProxyPool != null)
+            {
+                downloaderEntry.Downloader.HttpProxyPool = _httpProxyPool;
             }
 
             return Task.FromResult(downloaderEntry);
@@ -292,6 +326,7 @@ namespace DotnetSpider.Downloader
     class DownloaderEntry
     {
         public IDownloader Downloader { get; set; }
+
         public DateTime LastUsedTime { get; set; }
     }
 }

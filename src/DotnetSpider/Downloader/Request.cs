@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Net.Http;
+using DotnetSpider.Core;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 
 namespace DotnetSpider.Downloader
 {
@@ -50,6 +54,11 @@ namespace DotnetSpider.Downloader
         public string ContentType { get; set; }
 
         /// <summary>
+        /// 设置 Cookie
+        /// </summary>
+        public string Cookie { get; set; }
+
+        /// <summary>
         /// Headers
         /// </summary>
         public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
@@ -63,9 +72,11 @@ namespace DotnetSpider.Downloader
 
         public string Body { get; set; }
 
-        public HttpMethod Method { get; set; }
+        public HttpMethod Method { get; set; } = HttpMethod.Get;
 
         public int RetriedTimes { get; set; }
+
+        public Compression Compression { get; set; }
 
         public IDictionary<string, string> Properties => _properties.ToImmutableDictionary();
 

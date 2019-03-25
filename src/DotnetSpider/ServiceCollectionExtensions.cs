@@ -56,7 +56,7 @@ namespace DotnetSpider
             Log.Logger = configuration.CreateLogger();
 
             return builder;
-        }
+        }       
 
         /// <summary>
         /// 单机模式

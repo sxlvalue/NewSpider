@@ -163,7 +163,7 @@ namespace DotnetSpider.Data.Storage
             var columnsParamsSql = string.Join(", ", insertColumns.Select(p => $"@{p.Key}"));
 
             var tableSql = GenerateTableSql(tableMetadata);
-            var setCols = string.Join(", ", tableMetadata.Updates.Select(c => $"`{GetNameSql(c)}`= @{c}"));
+            var setCols = string.Join(", ", insertColumns.Select(c => $"`{GetNameSql(c.Key)}`= @{c}"));
             var sql =
                 $"INSERT INTO {tableSql} ({columnsSql}) VALUES ({columnsParamsSql}) ON DUPLICATE key UPDATE {setCols};";
             return sql;

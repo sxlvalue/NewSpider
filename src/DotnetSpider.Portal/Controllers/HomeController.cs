@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using DotnetSpider.Portal.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +11,12 @@ namespace DotnetSpider.Portal.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        public IActionResult Cookie()
+        {
+            return Content(string.Join($"; {Environment.NewLine}",
+                HttpContext.Request.Cookies.Select(x => $"{x.Key}={x.Value}")));
         }
 
         public IActionResult Privacy()

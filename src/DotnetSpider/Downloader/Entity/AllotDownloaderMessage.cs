@@ -11,6 +11,14 @@ namespace DotnetSpider.Downloader.Entity
         public Cookie[]  Cookies { get; set; }
         
         public bool UseProxy { get; set; }
+        
+        public bool UseCookies { get; set; }        
+        
+        public bool AllowAutoRedirect { get; set; }
+        
+        public int Timeout { get; set; }
+        
+        public bool DecodeHtml { get; set; }
 
         public int DownloaderCount { get; set; }
     }

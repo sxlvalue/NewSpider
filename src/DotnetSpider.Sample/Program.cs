@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
+using DotnetSpider.Core;
 using DotnetSpider.Sample.samples;
 
 namespace DotnetSpider.Sample

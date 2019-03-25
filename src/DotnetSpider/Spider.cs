@@ -215,10 +215,14 @@ namespace DotnetSpider
             return await _downloadService.AllocateAsync(new AllotDownloaderMessage
             {
                 OwnerId = Id,
-                Type = DownloaderType,
-                UseProxy = false,
-                DownloaderCount = DownloaderCount,
-                Cookies = _cookies.ToArray()
+                AllowAutoRedirect = DownloaderOptions.AllowAutoRedirect,
+                UseProxy = DownloaderOptions.UseProxy,
+                DownloaderCount = DownloaderOptions.DownloaderCount,
+                Cookies = DownloaderOptions.Cookies,
+                DecodeHtml = DownloaderOptions.DecodeHtml,
+                Timeout = DownloaderOptions.Timeout,
+                Type = DownloaderOptions.Type,
+                UseCookies = DownloaderOptions.UseCookies
             });
         }
 

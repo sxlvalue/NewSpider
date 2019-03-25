@@ -40,16 +40,7 @@ namespace DotnetSpider.Downloader
 
         private static bool IsJson(string content)
         {
-            try
-            {
-                JsonConvert.DeserializeObject(content);
-                return true;
-            }
-            catch
-            {
-                //TODO: maybe we need log here?
-                return false;
-            }
+            return content.StartsWith("[") || content.StartsWith("{");
         }
     }
 }

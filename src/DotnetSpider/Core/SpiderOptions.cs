@@ -28,6 +28,7 @@ namespace DotnetSpider.Core
 
         public string EmailPort => _configuration["EmailPort"];
 
+        public string ProxySupplyUrl => _configuration["ProxySupplyUrl"];        
 
         public SpiderOptions(IConfiguration configuration)
         {

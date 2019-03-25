@@ -61,13 +61,16 @@ namespace DotnetSpider.Core
                 GlobalMemoryStatus(ref mStatus);
                 TotalMemory = (int)(Convert.ToInt64(mStatus.DwTotalPhys) / 1024 / 1024);
             }
-            else
+            else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 var lines = File.ReadAllLines("/proc/meminfo");
                 var infoDic = lines.Select(line => line.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).Take(2).ToList()).ToDictionary(items => items[0], items => long.Parse(items[1]));
                 TotalMemory = (int)(infoDic["MemTotal:"] / 1024);
             }
-
+            else
+            {
+                // TODO: OSX
+            }
             var networkInterface = NetworkInterface.GetAllNetworkInterfaces().First(i => i.NetworkInterfaceType == NetworkInterfaceType.Ethernet);
             var unicastAddresses = networkInterface.GetIPProperties().UnicastAddresses;
             IpAddress = unicastAddresses.First(a => a.IPv4Mask.ToString() != "255.255.255.255" && a.Address.AddressFamily == AddressFamily.InterNetwork).Address.ToString();
