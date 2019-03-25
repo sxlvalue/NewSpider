@@ -216,10 +216,9 @@ namespace DotnetSpider
             {
                 OwnerId = Id,
                 Type = DownloaderType,
-                Speed = Speed,
                 UseProxy = false,
                 DownloaderCount = DownloaderCount,
-                Cookie = Cookie
+                Cookies = _cookies.ToArray()
             });
         }
 

@@ -6,13 +6,7 @@ namespace DotnetSpider.Downloader
 {
     public class HttpClientDownloader : AbstractDownloader
     {
-        /// <summary>
-        /// Cookie Container
-        /// </summary>
-        /// <summary xml:lang="zh-CN">
-        /// Cookie 管理容器
-        /// </summary>
-        protected readonly CookieContainer CookieContainer = new CookieContainer();
+
         
         /// <summary>
         /// 是否自动跳转
