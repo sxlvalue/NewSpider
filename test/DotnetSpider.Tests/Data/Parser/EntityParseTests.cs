@@ -6,10 +6,10 @@ using DotnetSpider.Data.Storage.Model;
 using DotnetSpider.Selector;
 using Xunit;
 
-namespace DotnetSpider.Tests
+namespace DotnetSpider.Tests.Data.Parser
 {
     public class EntityParseTests
-    {
+    {       
         [Fact(DisplayName = "Formatters")]
         public void Formatters()
         {
@@ -39,7 +39,6 @@ namespace DotnetSpider.Tests
             Assert.Equal(typeof(Entity9).FullName, entity3.Model.TypeName);
             Assert.Equal(typeof(Entity9).FullName, entity3.TableMetadata.TypeName);
         }
- 
 
 
         [Fact(DisplayName = "TableInfoEntityModelDefine")]

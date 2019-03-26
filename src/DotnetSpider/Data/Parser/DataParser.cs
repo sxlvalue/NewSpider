@@ -12,8 +12,15 @@ namespace DotnetSpider.Data.Parser
         protected override Task<DataFlowResult> Parse(DataFlowContext context)
         {
             var response = context.GetResponse();
-            context.AddItem("URL", response.Request.Url);
-            context.AddItem("Content", response.RawText);
+            if (response != null)
+            {
+                context.AddItem("URL", response.Request.Url);
+                context.AddItem("Content", response.RawText);
+                context.AddItem("TargetUrl", response.TargetUrl);
+                context.AddItem("Success", response.Success);
+                context.AddItem("ElapsedMilliseconds", response.ElapsedMilliseconds);
+            }
+
             return Task.FromResult(DataFlowResult.Success);
         }
 

@@ -11,8 +11,8 @@ namespace DotnetSpider.Tests
 {
     public partial class SpiderTests : TestBase
     {
-        [Fact(DisplayName = "RunAsyncAndStop")]
-        public void RunAsyncAndStop()
+        [Fact(DisplayName = "RunThenExit")]
+        public void RunThenExit()
         {
             var url = Environment.GetEnvironmentVariable("TRAVIS") == "1"
                 ? "https://www.google.com/"
@@ -52,8 +52,8 @@ namespace DotnetSpider.Tests
             Assert.Equal(Status.Exited, spider.Status);
         }
 
-        [Fact(DisplayName = "RunAsyncAndContinue")]
-        public void RunAsyncAndContinue()
+        [Fact(DisplayName = "RunThenPauseThenContinueThenExit")]
+        public void RunThenPauseThenContinueThenExit()
         {
             var url = Environment.GetEnvironmentVariable("TRAVIS") == "1"
                 ? "https://www.google.com/"
@@ -95,8 +95,11 @@ namespace DotnetSpider.Tests
             Assert.Equal(Status.Exited, spider.Status);
         }
 
-        [Fact(DisplayName = "CloseSignal")]
-        public void CloseSignal()
+        /// <summary>
+        /// 测试 MMF 关闭信号是否能正常工作
+        /// </summary>
+        [Fact(DisplayName = "MmfCloseSignal")]
+        public void MmfCloseSignal()
         {
             var url = Environment.GetEnvironmentVariable("TRAVIS") == "1"
                 ? "https://www.google.com/"
@@ -135,11 +138,14 @@ namespace DotnetSpider.Tests
         }
 
         /// <summary>
-        /// //TODO: 配置使用 TestDownloader, 一直抛错，检测到达指定尝试次数是否不再重试。
+        /// 1. 下载如果不正确是否有正常重试
+        /// 2. 并且重试次数是否生效
+        /// 3. 重试的请求的 Depth 不变
         /// </summary>
         [Fact(DisplayName = "RetryDownloadTimes")]
         public void RetryDownloadTimes()
         {
+            // 配置使用 TestDownloader, 一直抛错，检测到达指定尝试次数是否不再重试。
             var spider = SpiderFactory.Create<Spider>();
             spider.Id = Guid.NewGuid().ToString("N");
             spider.Name = "RetryDownloadTimes";
@@ -164,12 +170,14 @@ namespace DotnetSpider.Tests
         }
 
         /// <summary>
-        /// TODO: 当所有 DataFlow 走完的时候，如果没有任何结析结果，RetryWhenResultIsEmpty 为 True 时会把当前 Requst 添加回队列再次重试
+        /// 1. 当所有 DataFlow 走完的时候，如果没有任何结析结果，RetryWhenResultIsEmpty 为 True 时会把当前 Request 添加回队列再次重试
         /// http://www.devfans.com/home/testempty 为一个可请求但是返回内容为空的测试地址
+        /// 2. 重试的请求的 Depth 不变
         /// </summary>
         [Fact(DisplayName = "RetryWhenResultIsEmpty")]
         public void RetryWhenResultIsEmpty()
         {
+            //TODO: 
             var spider = SpiderFactory.Create<Spider>();
             spider.Id = Guid.NewGuid().ToString("N");
             spider.Name = "RetryWhenResultIsEmpty";
@@ -195,7 +203,7 @@ namespace DotnetSpider.Tests
         }
 
         /// <summary>
-        /// TODO: 检测 Spider._speedControllerInterval 的值是否设置正确
+        /// 检测 Spider._speedControllerInterval 的值是否设置正确
         /// 当 Spider.Speed 设置的值 n 大于 1 时，表示每秒下载 n 个链接，因此 speed interval 设置为 1 秒， 每秒从 scheduler 中取出 n 个链接，分发到各下载器去下载。
         /// 当 Spider.Speed 设置的值 n 大于 0 小于 1 时， 表示每秒下载个数要小于 1，因此不能用 1 秒做间隔， 而应该用 1/n
         /// Spider.Speed 的值必须大于 1
@@ -203,14 +211,16 @@ namespace DotnetSpider.Tests
         [Fact(DisplayName = "SpeedInterval")]
         public void SpeedInterval()
         {
+            //TODO: 
         }
 
         /// <summary>
-        /// TODO: 设置 Depth 为 2，使用全站采集，检测目标链接深度大于 2 的是否为入队
+        /// 设置 Depth 为 2，使用全站采集，检测目标链接深度大于 2 的是否为入队
         /// </summary>
         [Fact(DisplayName = "Depth")]
         public void Depth()
         {
+            //TODO: 
         }
     }
 }

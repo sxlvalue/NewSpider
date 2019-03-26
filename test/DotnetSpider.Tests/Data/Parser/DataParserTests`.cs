@@ -10,27 +10,53 @@ using DotnetSpider.Downloader;
 using DotnetSpider.Selector;
 using Xunit;
 
-namespace DotnetSpider.Tests
+namespace DotnetSpider.Tests.Data.Parser
 {
     public partial class DataParserTests
     {
         /// <summary>
-        /// TODO: 检测在实体类上面添加 FollowSelector 是否生效
+        /// 检测在实体类上面添加 ShareValueSelectors 是否生效
+        /// 1. 实体类上面添加 ValueSelector
+        /// 2. 属性上使用 Environment 查询共享值
+        /// </summary>
+        [Fact(DisplayName = "ShareValueSelectors")]
+        public void ShareValueSelectors()
+        {
+            //TODO
+        }
+        
+        
+        /// <summary>
+        /// 检测在实体类上面添加 FollowSelector 是否生效
         /// </summary>
         [Fact(DisplayName = "FollowSelector")]
         public void FollowSelector()
         {
+            //TODO
         }
 
         /// <summary>
-        /// TODO： 检测环境变量查询是否正确
+        /// 检测环境变量查询是否正确
         /// 1. Request 中的 Properties 可以查询
         /// 2. 特殊类型如 当天时间、元素索引、当天日期、当月等
         /// </summary>
+        [Fact(DisplayName = "EnvironmentSelector")]
         public void EnvironmentSelector()
-        {                     
+        {    
+            //TODO
         }
-
+        
+        /// <summary>
+        /// 检测配置在属性上的 Formatter 是否有被调用
+        /// 1. 单个
+        /// 2. 多个
+        /// </summary>
+        [Fact(DisplayName = "Formatters")]
+        public void Formatters()
+        {    
+            //TODO
+            
+        }
         /// <summary>
         /// 测试实体类的解析是否正确
         /// </summary>
