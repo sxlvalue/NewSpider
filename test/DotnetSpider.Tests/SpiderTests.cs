@@ -165,10 +165,33 @@ namespace DotnetSpider.Tests
 
         /// <summary>
         /// TODO: 当所有 DataFlow 走完的时候，如果没有任何结析结果，RetryWhenResultIsEmpty 为 True 时会把当前 Requst 添加回队列再次重试
+        /// http://www.devfans.com/home/testempty 为一个可请求但是返回内容为空的测试地址
         /// </summary>
         [Fact(DisplayName = "RetryWhenResultIsEmpty")]
         public void RetryWhenResultIsEmpty()
         {
+            var spider = SpiderFactory.Create<Spider>();
+            spider.Id = Guid.NewGuid().ToString("N");
+            spider.Name = "RetryWhenResultIsEmpty";
+            spider.Speed = 1;
+            spider.Depth = 3;
+            spider.EmptySleepTime = 2;
+            spider.RetryDownloadTimes = 5;
+            spider.RetryWhenResultIsEmpty = false;
+            spider.DownloaderOptions.Type = DownloaderType.HttpClient;
+            spider.Scheduler = new QueueDistinctBfsScheduler();
+            spider.AddRequests("http://www.devfans.com/home/testempty");
+            spider.RunAsync().Wait(); // 启动
+
+            var statisticsStore = SpiderFactory.GetStatisticsStore();
+            var s = statisticsStore.GetSpiderStatisticsAsync(spider.Id).Result;
+            Assert.Equal(6, s.Total);
+            Assert.Equal(6, s.Failed);
+            Assert.Equal(0, s.Success);
+
+            var ds = statisticsStore.GetDownloadStatisticsListAsync(1, 10).Result[0];
+            Assert.Equal(6, ds.Failed);
+            Assert.Equal(0, ds.Success);
         }
 
         /// <summary>
