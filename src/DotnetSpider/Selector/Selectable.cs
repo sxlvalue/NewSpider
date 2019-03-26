@@ -13,13 +13,13 @@ namespace DotnetSpider.Selector
 		/// <summary>
 		/// 构造方法
 		/// </summary>
-		/// <param name="html">内容</param>
+		/// <param name="text">内容</param>
 		/// <param name="url">URL相对路径补充</param>
 		/// <param name="removeOutboundLinks">是否去除外链</param>
-		public Selectable(string html, string url, bool removeOutboundLinks = true)
+		public Selectable(string text, string url, bool removeOutboundLinks = true)
 		{
 			HtmlDocument document = new HtmlDocument {OptionAutoCloseOnEnd = true};
-			document.LoadHtml(html);
+			document.LoadHtml(text);
 
 			if (!string.IsNullOrWhiteSpace(url))
 			{
@@ -39,10 +39,10 @@ namespace DotnetSpider.Selector
 		/// <summary>
 		/// 构造方法
 		/// </summary>
-		/// <param name="json">Json</param>
-		public Selectable(string json)
+		/// <param name="text">Json</param>
+		public Selectable(string text)
 		{
-			Elements = new List<dynamic> {json};
+			Elements = new List<dynamic> {text};
 		}
 
 		/// <summary>

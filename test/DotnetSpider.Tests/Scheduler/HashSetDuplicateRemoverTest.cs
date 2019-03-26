@@ -4,14 +4,14 @@ using DotnetSpider.Core;
 using DotnetSpider.Downloader;
 using Xunit;
 
-namespace DotnetSpider.Tests
+namespace DotnetSpider.Tests.Scheduler
 {
-    public class HashSetDuplicateRemoverTest
+    public class HashSetDuplicateRemoverTests
     {
         [Fact(DisplayName = "HashSetDuplicate")]
         public void HashSetDuplicate()
         {
-            Scheduler.Component.HashSetDuplicateRemover scheduler = new Scheduler.Component.HashSetDuplicateRemover();
+            DotnetSpider.Scheduler.Component.HashSetDuplicateRemover scheduler = new DotnetSpider.Scheduler.Component.HashSetDuplicateRemover();
 
             var ownerId = Guid.NewGuid().ToString("N");
             var r1 = new Request("http://www.a.com")
@@ -50,7 +50,7 @@ namespace DotnetSpider.Tests
         public void ParallelHashSetDuplicate()
         {
             var ownerId = Guid.NewGuid().ToString("N");
-            Scheduler.Component.HashSetDuplicateRemover scheduler = new Scheduler.Component.HashSetDuplicateRemover();
+            DotnetSpider.Scheduler.Component.HashSetDuplicateRemover scheduler = new DotnetSpider.Scheduler.Component.HashSetDuplicateRemover();
             var r1 = new Request("http://www.a.com")
             {
                 OwnerId = ownerId
@@ -69,12 +69,6 @@ namespace DotnetSpider.Tests
                 isDuplicate = scheduler.IsDuplicate(r);
                 Assert.True(isDuplicate);
             });
-        }
-
-        protected virtual void ComputeHash(Request request)
-        {
-            var content = $"{request.OwnerId}{request.Url}{request.Method}{request.Body}";
-            request.Hash = content.ToMd5();
         }
     }
 }

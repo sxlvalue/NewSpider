@@ -23,6 +23,10 @@ using Newtonsoft.Json;
 
 namespace DotnetSpider
 {
+    /// <summary>
+    /// Depth 是独立的系统，只有真的是解析出来的新请求才会导致 Depth 加 1， Depth 一般不能作为 Request 的 Hash 计算，因为不同深度会有相同的链接
+    /// TODO: 下载和解析导致的重试都不需要更改 Depth, 直接调用下载分发服务，跳过 Scheduler
+    /// </summary>
     public partial class Spider
     {
         private readonly IServiceProvider _services;
@@ -304,6 +308,7 @@ namespace DotnetSpider
                         response.Request.ComputeHash();
                         // 不需要添加总计
                         _scheduler.Enqueue(new[] {response.Request.Clone()});
+                        
                     }
 
                     // 解析的目标请求

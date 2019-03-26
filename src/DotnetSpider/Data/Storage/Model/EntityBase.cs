@@ -105,7 +105,7 @@ namespace DotnetSpider.Data.Storage.Model
             return this as T;
         }
 
-        protected T ConfigureUpdateColumn(Expression<Func<T, object>> indexExpression)
+        protected T ConfigureUpdateColumns(Expression<Func<T, object>> indexExpression)
         {
             Check.NotNull(indexExpression, nameof(indexExpression));
             var columns = GetColumns(indexExpression);

@@ -11,13 +11,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1"/>
-        <PackageReference Include="xunit" Version="2.4.1"/>
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\DotnetSpider\DotnetSpider.csproj"/>
+        <ProjectReference Include="..\..\src\DotnetSpider\DotnetSpider.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -37,9 +37,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Update="DataParserTests`.cs">
-            <DependentUpon>DataParserTests.cs</DependentUpon>
-        </Compile>
+      <Folder Include="Downloader" />
     </ItemGroup>
 
 </Project>

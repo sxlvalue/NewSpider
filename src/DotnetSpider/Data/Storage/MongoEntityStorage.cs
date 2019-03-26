@@ -7,6 +7,10 @@ using MongoDB.Driver;
 
 namespace DotnetSpider.Data.Storage
 {
+    /// <summary>
+    /// MongoDB 存储器
+    /// TODO: 是否要考虑存储模式：插入，新的插入旧的更新，更新 ETC
+    /// </summary>
     public class MongoEntityStorage : StorageBase
     {
         private readonly MongoClient _client;

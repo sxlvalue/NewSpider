@@ -2,10 +2,10 @@
 using DotnetSpider.Data.Parser.Formatter;
 using Xunit;
 
-namespace DotnetSpider.Tests
+namespace DotnetSpider.Tests.Data.Parser.Formatter
 {
 
-	public class FormatterTest
+	public class FormatterTests
 	{
 		[Fact(DisplayName = "RegexFormatter")]
 		public void RegexFormatterTest()

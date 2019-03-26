@@ -8,10 +8,19 @@ namespace DotnetSpider.Data.Parser.Attribute
     /// </summary>
     public class ValueSelector : Selector
     {
+        /// <summary>
+        /// 属性反射，用于设置解析值到实体对象
+        /// </summary>
         internal PropertyInfo PropertyInfo { get; set; }
         
+        /// <summary>
+        /// 值是否可以为空, 如果不能为空但解析到的值为空时，当前对象被抛弃
+        /// </summary>
         internal  bool NotNull { get; set; }
         
+        /// <summary>
+        /// 解析值的名称，配置在 Entity 上时必填，配置在属性上时可以空，如果为空会被属性名替代
+        /// </summary>
         public string Name { get; set; }
 
         /// <summary>
